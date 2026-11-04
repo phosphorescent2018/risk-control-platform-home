@@ -1,0 +1,9 @@
+.DS_Store
+node_modules/
+*.log
+assets/
+build.py
+page.html
+headers.txt
+preview.png
+compare-original-vs-clone.png
