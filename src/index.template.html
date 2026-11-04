@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>跑批作业处理 · risk control platform</title>
+<style>
+{{CSS}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="sidebar">
+    <div class="brand"><img src="data:image/svg+xml;base64,{{LOGO}}" alt="mindigital GLOBAL"></div>
+    <nav class="nav">
+      <div class="nav-item" role="button" tabindex="0">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="3.1"/><path d="M7 7.9h10M7 12h10M7 16.1h10"/><path d="M10.7 6.7 9 7.9l1.7 1.2z" fill="currentColor" stroke="none"/><path d="M13.3 10.8 15 12l-1.7 1.2z" fill="currentColor" stroke="none"/><path d="M10.7 15 9 16.2l1.7 1.2z" fill="currentColor" stroke="none"/></svg>
+        <span class="label">跑批作业处理</span>
+        <svg class="chev" viewBox="0 0 10 6" fill="none" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hide-btn" id="hideBtn" type="button">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M1.6 3h12.8M1.6 13h12.8M7.2 8h7.2"/><path d="M4.2 5.4 1.6 8l2.6 2.6"/>
+        </svg>
+        <span id="hideLabel">Hide Menu</span>
+      </button>
+      <div class="top-right">
+        <div class="timepill">
+          <svg class="clk" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="#6193F7"/><path d="M8 4.2V8h3.1" fill="none" stroke="#fff" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="tz">Uganda Time</span>
+          <span class="date" id="clock">2026/11/04 10:06:40</span>
+          <svg class="sync" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2.4 4.7a5.15 5.15 0 0 1 8.9 0"/><path d="M11.7 3.5 12.4 5l-1.7.3" fill="currentColor" stroke="none"/>
+            <path d="M11.6 9.4a5.15 5.15 0 0 1-8.9 0"/><path d="M2.3 10.6 1.6 9.1l1.7-.3" fill="currentColor" stroke="none"/>
+          </svg>
+        </div>
+        <div class="vdiv"></div>
+        <div class="user">
+          <span class="avatar">
+            <svg viewBox="0 0 32 32" aria-hidden="true">
+              <defs><linearGradient id="av" x1="16" y1="8" x2="16" y2="28" gradientUnits="userSpaceOnUse"><stop stop-color="#AFC2FC"/><stop offset="1" stop-color="#7C9DF7"/></linearGradient></defs>
+              <circle cx="16" cy="13.2" r="3.5" fill="url(#av)"/>
+              <path d="M9.2 25.9c.1-4.3 3.1-6.8 6.8-6.8s6.7 2.5 6.8 6.8c0 .5-.4.9-.9.9H10.1c-.5 0-.9-.4-.9-.9z" fill="url(#av)"/>
+            </svg>
+          </span>
+          <span class="uname">Hu Tang</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="subbar"></div>
+
+    <div class="content">
+      <div class="card ws">
+        <div class="ws-head">
+          <div class="ws-top">
+            <div class="ws-h1">跑批作业处理<span class="concept">概念版</span></div>
+            <div class="ws-right">
+              <div class="slice-chip"><span>切片日</span><b id="sliceDate">2026-10-23</b><i id="sliceTime">22:13</i></div>
+              <span class="badge" id="runBadge">已完成</span>
+              <button class="btn primary" id="launchBtn" type="button">发起跑批</button>
+            </div>
+          </div>
+          <div class="ws-meta">
+              <button class="task-btn" id="taskBtn" type="button">
+                <span class="task-name" id="taskName">贷前全量跑批</span>
+                <span class="task-code" id="taskCode">all_wallet_active_new</span>
+                <svg viewBox="0 0 10 6" fill="none" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <span class="sep"></span>
+              <span id="taskStrategy">策略 credit_offline v20</span>
+              <span class="sep"></span>
+              <span id="taskProduct">产品 MTN_UG_APP</span>
+              <span class="sep"></span>
+              <span id="taskCrowd">人群 3,872.9 万</span>
+          </div>
+          <div class="task-menu" id="taskMenu" hidden>
+            <button data-key="wallet" class="on">
+              <span><b>贷前全量跑批</b><i>all_wallet_active_new · PRE_LOAN</i></span><em>3,872.9 万</em>
+            </button>
+            <button data-key="loan">
+              <span><b>贷中全量跑批</b><i>all_loan_in_new · IN_LOAN</i></span><em>649.2 万</em>
+            </button>
+          </div>
+        </div>
+
+        <nav class="stages" id="stages">
+          <button class="stage active" data-stage="prepare" type="button"><span class="st-no">01</span><span class="st-body"><b>准备</b><i id="stPrepare">切片源健康 · 就绪</i></span><span class="st-flag" id="flagPrepare"></span></button>
+          <button class="stage" data-stage="run" type="button"><span class="st-no">02</span><span class="st-body"><b>执行</b><i id="stRun">无运行中批次</i></span><span class="st-flag" id="flagRun"></span></button>
+          <button class="stage" data-stage="report" type="button"><span class="st-no">03</span><span class="st-body"><b>报告</b><i id="stReport">459 批 · 已出报告</i></span><span class="st-flag" id="flagReport"></span></button>
+          <button class="stage" data-stage="push" type="button"><span class="st-no">04</span><span class="st-body"><b>推送</b><i id="stPush">已推送 LMS</i></span><span class="st-flag" id="flagPush"></span></button>
+        </nav>
+
+        <div class="panel-wrap" id="panelWrap">
+          <section class="panel active" data-panel="prepare" id="panelPrepare"></section>
+          <section class="panel" data-panel="run" id="panelRun"></section>
+          <section class="panel" data-panel="report" id="panelReport"></section>
+          <section class="panel" data-panel="push" id="panelPush"></section>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+<script>
+{{JS}}
+</script>
+</body>
+</html>

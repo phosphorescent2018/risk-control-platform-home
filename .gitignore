@@ -1,8 +1,7 @@
 .DS_Store
 node_modules/
 *.log
-assets/
-build.py
+assets/wait.png
 page.html
 headers.txt
 preview.png
