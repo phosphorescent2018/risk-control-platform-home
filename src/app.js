@@ -150,10 +150,6 @@
   function renderHeader() {
     const t = T();
     $('#taskName').textContent = t.name;
-    $('#taskCode').textContent = t.code;
-    $('#taskStrategy').textContent = '策略 ' + t.strategy;
-    $('#taskProduct').textContent = '产品 ' + t.product;
-    $('#taskCrowd').textContent = '人群 ' + t.crowdText;
     $('#sliceDate').textContent = t.sliceDate;
     $('#sliceTime').textContent = t.sliceTime;
     const b = badgeInfo();
@@ -209,7 +205,7 @@
       const st = dayStatus(t, iso);
       const bars = [st.wallet, st.od, st.pool].map((v) => '<i class="' + escStatus(v) + '"></i>').join('');
       cols += '<div class="cal-col ' + (iso === S.selDay ? 'sel' : '') + '" data-day="' + iso + '">' +
-        '<div class="cal-d">' + iso.slice(8) + '</div><div class="cal-w">' + weekName(dt) + '</div>' +
+        '<div class="cal-d">' + iso.slice(8) + '</div>' +
         '<div class="cal-bars">' + bars + '</div></div>';
     }
     return cols;
@@ -267,14 +263,13 @@
     $('#panelPrepare').innerHTML =
       '<div class="prep-grid">' +
         '<section class="box">' +
-          '<div class="box-head"><div><h3>切片源健康日历</h3><p class="sub">' + md(dateISO(addDays(parseISO(t.sliceDate), -13))) + ' → ' + md(t.sliceDate) + ' · 点击日期查看源表明细</p></div>' +
+          '<div class="box-head"><div><h3>切片源健康日历</h3><p class="sub">' + md(dateISO(addDays(parseISO(t.sliceDate), -13))) + ' → ' + md(t.sliceDate) + '</p></div>' +
             '<div class="legend"><span><b style="background:#5BC08D"></b>就绪</span><span><b style="background:#E7B04A"></b>偏低</span><span><b style="background:#E06B6B"></b>缺数</span></div></div>' +
           '<div class="cal">' + renderCalendar() + '</div>' +
           '<div class="cal-detail">' + renderCalDetail() + '</div>' +
         '</section>' +
         '<section class="box launch">' +
           '<h3>发起跑批</h3>' +
-          '<p class="slice-line">切片日 <b>' + t.sliceDate + '</b> · 离线库单版本</p>' +
           '<ul class="checks">' + checks + '</ul>' +
           '<div class="est">' +
             '<div><i>预计人数</i><b>' + t.crowdText + '</b></div>' +
@@ -290,7 +285,7 @@
         '<div class="cfg">' + cfg + '</div>' +
       '</div>' +
       '<div class="box" style="margin-top:14px">' +
-        '<div class="box-head"><div><h3>最近批次</h3><p class="sub">同一任务的历史执行 · 报告与推送状态</p></div></div>' +
+        '<div class="box-head"><div><h3>最近批次</h3></div></div>' +
         '<table class="list" style="margin-top:8px"><thead><tr><th>批次</th><th>切片日</th><th class="r">人数</th><th>状态</th><th class="r">耗时</th><th>推送</th></tr></thead><tbody>' + history + '</tbody></table>' +
       '</div>';
   }
