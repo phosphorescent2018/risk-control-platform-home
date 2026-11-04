@@ -118,7 +118,7 @@ body {
 .cal-col:hover { background:#F7F9FD; }
 .cal-col.sel { border-color:#BFD6FF; background:#F3F8FF; }
 .cal-d { font-size:10.5px; font-weight:600; color:var(--ink); white-space:nowrap; }
-.cal-w { font-size:9px; color:var(--faint); margin-top:1px; }
+.cal-w { font-size:9px; color:var(--faint); margin-top:1px; white-space:nowrap; }
 .cal-bars { margin-top:5px; display:flex; flex-direction:column; gap:2px; }
 .cal-bars i { height:4px; border-radius:2px; background:#DDE2EB; display:block; }
 .cal-bars i.ok { background:#5BC08D; }

@@ -125,7 +125,7 @@ body {
 .cal-col:hover { background:#F7F9FD; }
 .cal-col.sel { border-color:#BFD6FF; background:#F3F8FF; }
 .cal-d { font-size:10.5px; font-weight:600; color:var(--ink); white-space:nowrap; }
-.cal-w { font-size:9px; color:var(--faint); margin-top:1px; }
+.cal-w { font-size:9px; color:var(--faint); margin-top:1px; white-space:nowrap; }
 .cal-bars { margin-top:5px; display:flex; flex-direction:column; gap:2px; }
 .cal-bars i { height:4px; border-radius:2px; background:#DDE2EB; display:block; }
 .cal-bars i.ok { background:#5BC08D; }
@@ -405,7 +405,7 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
   };
   const dateISO = (dt) => dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate());
   const md = (s) => s.slice(5).replace('-', '-');
-  const weekName = (dt) => '周' + '日一二三四五六'[dt.getDay()];
+  const weekName = (dt) => '日一二三四五六'[dt.getDay()];
   const fmtDT = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
   const nowText = () => {
     const d = new Date(Date.now() + 3 * 3600 * 1000);
@@ -635,7 +635,7 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
       ['BusinessID', t.businessId],
       ['任务类型', '离线策略批次 · ' + t.scene],
       ['触发方式', '手动发起 / 定时 02:00'],
-      ['发布目标', 'LMS（额度）· Digiops（短信）']
+      ['发布目标', 'LMS · Digiops']
     ].map(([k, v]) => '<div><i>' + k + '</i><b>' + esc(v) + '</b></div>').join('');
 
     const history = t.history.map((r) => {

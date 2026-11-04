@@ -26,7 +26,7 @@
   };
   const dateISO = (dt) => dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate());
   const md = (s) => s.slice(5).replace('-', '-');
-  const weekName = (dt) => '周' + '日一二三四五六'[dt.getDay()];
+  const weekName = (dt) => '日一二三四五六'[dt.getDay()];
   const fmtDT = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
   const nowText = () => {
     const d = new Date(Date.now() + 3 * 3600 * 1000);
@@ -256,7 +256,7 @@
       ['BusinessID', t.businessId],
       ['任务类型', '离线策略批次 · ' + t.scene],
       ['触发方式', '手动发起 / 定时 02:00'],
-      ['发布目标', 'LMS（额度）· Digiops（短信）']
+      ['发布目标', 'LMS · Digiops']
     ].map(([k, v]) => '<div><i>' + k + '</i><b>' + esc(v) + '</b></div>').join('');
 
     const history = t.history.map((r) => {
