@@ -51,6 +51,7 @@ body {
 .ws-top { display:flex; align-items:center; justify-content:space-between; gap:14px; }
 .ws-left { display:flex; align-items:center; gap:12px; min-width:0; }
 .ws-h1 { font-size:17px; font-weight:600; letter-spacing:.2px; white-space:nowrap; }
+.batch-label { font-size:12px; color:var(--muted); padding-left:12px; border-left:1px solid var(--line); font-variant-numeric:tabular-nums; white-space:nowrap; }
 .concept { font-size:9.5px; font-weight:500; color:#7C8AA5; background:#F2F5FA; border:1px solid #E6EAF2; border-radius:4px; padding:1px 5px; letter-spacing:0; }
 .ws-meta { margin-top:7px; display:flex; align-items:center; gap:9px; font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; }
 .task-btn { display:inline-flex; align-items:center; gap:6px; background:none; border:0; padding:0 0 0 12px; border-left:1px solid var(--line); font:inherit; color:var(--ink); cursor:pointer; white-space:nowrap; }
@@ -113,7 +114,9 @@ body {
 .btn.sm { height:26px; padding:0 9px; font-size:11px; }
 
 /* prepare */
-.prep-grid { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(0,1fr); gap:14px; align-items:stretch; }
+.prep-grid { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:14px; align-items:stretch; }
+.prep-left { display:flex; flex-direction:column; gap:14px; min-width:0; }
+.form-box { align-self:stretch; }
 .cal { margin-top:10px; display:grid; grid-template-columns:repeat(14,minmax(0,1fr)); gap:5px; }
 .cal-col { border:1px solid transparent; border-radius:8px; padding:6px 2px 5px; text-align:center; cursor:pointer; }
 .cal-col:hover { background:#F7F9FD; }
@@ -162,6 +165,35 @@ table.list td { padding:6px; border-bottom:1px dashed #EFF1F6; font-variant-nume
 table.list tr:last-child td { border-bottom:0; }
 table.list td.r, table.list th.r { text-align:right; }
 table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:10.5px; color:var(--muted); }
+
+/* config form */
+.form-box .box-head { margin-bottom:2px; }
+.field { margin-top:10px; }
+.field > label { display:block; font-size:9.5px; color:var(--muted); margin-bottom:5px; }
+.static { font-size:12px; color:var(--ink); }
+.opts { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.opt { border:1px solid var(--line); border-radius:8px; padding:7px 8px; background:#fff; text-align:left; cursor:pointer; font:inherit; }
+.opt:hover { border-color:#C9D4EA; }
+.opt.on { border-color:#BFD6FF; background:#F5F9FF; }
+.opt b { display:block; font-size:11px; font-weight:600; color:var(--ink); }
+.opt i { display:block; font-style:normal; font-size:9.5px; color:var(--muted); margin-top:2px; }
+.ver-row { display:flex; align-items:center; }
+.seg { display:inline-flex; border:1px solid var(--line); border-radius:7px; overflow:hidden; }
+.seg button { border:0; background:#fff; padding:5px 10px; font:inherit; font-size:11px; color:var(--ink); cursor:pointer; }
+.seg button.on { background:#F0F6FF; color:var(--blue-deep); font-weight:600; }
+.ver { margin-left:8px; font-size:11px; color:var(--muted); }
+.groups { display:flex; flex-direction:column; gap:5px; }
+.chk { display:flex; align-items:center; gap:7px; border:1px solid var(--line); border-radius:7px; padding:6px 8px; background:#fff; font:inherit; font-size:11px; color:var(--ink); cursor:pointer; text-align:left; }
+.chk:hover { border-color:#C9D4EA; }
+.chk.on { border-color:#BFD6FF; background:#F5F9FF; }
+.cbx { width:12px; height:12px; border:1px solid #C9D2E2; border-radius:3px; flex:0 0 12px; position:relative; }
+.chk.on .cbx { background:var(--blue); border-color:var(--blue); }
+.chk.on .cbx:after { content:''; position:absolute; left:3px; top:1px; width:3px; height:6px; border:solid #fff; border-width:0 1.5px 1.5px 0; transform:rotate(45deg); }
+.chk em { margin-left:auto; font-style:normal; color:var(--muted); font-size:10px; }
+.auto-row { display:flex; align-items:center; gap:8px; margin-top:7px; font-size:10.5px; color:var(--muted); }
+.auto-row .switch { margin-left:auto; width:28px; height:16px; }
+.auto-row .switch:after { width:12px; height:12px; }
+.auto-row .switch.on:after { left:14px; }
 
 /* run */
 .run-top { display:grid; grid-template-columns:132px minmax(0,1fr) auto; gap:16px; align-items:center; }
