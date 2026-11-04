@@ -35,7 +35,7 @@
 
   const DATA = {
     wallet: {
-      key: 'wallet', name: '贷前全量跑批', code: 'all_wallet_active_new', scene: 'PRE_LOAN',
+      key: 'wallet', name: '贷前跑批', code: 'all_wallet_active_new', scene: 'PRE_LOAN',
       strategy: 'credit_offline v20', product: 'MTN_UG_APP', businessId: 'MTN_Uganda',
       crowd: 38729000, crowdText: '3,872.9 万',
       sliceDate: '2026-10-23', sliceTime: '22:13',
@@ -72,7 +72,7 @@
       ]
     },
     loan: {
-      key: 'loan', name: '贷中全量跑批', code: 'all_loan_in_new', scene: 'IN_LOAN',
+      key: 'loan', name: '贷中跑批', code: 'all_loan_in_new', scene: 'IN_LOAN',
       strategy: 'Dai_Zhong v46', product: 'MTN_UG_APP', businessId: 'MTN_Uganda',
       crowd: 6492000, crowdText: '649.2 万',
       sliceDate: '2026-10-05', sliceTime: '22:13',
@@ -250,7 +250,7 @@
 
     const cfg = [
       ['BusinessID', t.businessId],
-      ['任务类型', '离线策略批次 · ' + t.scene],
+      ['任务类型', '离线策略批次'],
       ['触发方式', '手动发起 / 定时 02:00'],
       ['发布目标', 'LMS · Digiops']
     ].map(([k, v]) => '<div><i>' + k + '</i><b>' + esc(v) + '</b></div>').join('');
@@ -277,7 +277,7 @@
             '<div><i>预计耗时</i><b>约 ' + t.durationText + '</b></div>' +
           '</div>' +
           '<button class="btn primary wide" data-launch ' + (running ? 'disabled' : '') + '>发起跑批</button>' +
-          '<div class="hint">按切片日全量重算，不支持增量</div>' +
+          '<div class="hint">按切片日重算，不支持增量</div>' +
         '</section>' +
       '</div>' +
       '<div class="box" style="margin-top:14px">' +
