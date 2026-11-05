@@ -165,7 +165,7 @@
         '<td><span class="tag ' + ps.c + '">' + ps.t + '</span></td>' +
         '</tr>';
     }).join('');
-    $('#panelList').innerHTML = '<table class="batch-table"><thead><tr><th>批次名称</th><th>批次号</th><th>策略</th><th>切片日</th><th class="r">人数</th><th>状态</th><th class="r">耗时</th><th>推送</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    $('#panelList').innerHTML = renderReadiness() + '<div class="list-head"><h3>跑批记录</h3></div>' + '<table class="batch-table"><thead><tr><th>批次名称</th><th>批次号</th><th>策略</th><th>切片日</th><th class="r">人数</th><th>状态</th><th class="r">耗时</th><th>推送</th></tr></thead><tbody>' + rows + '</tbody></table>';
   }
 
   /* ---------- create ---------- */
@@ -232,7 +232,7 @@
     '</section>';
   }
 
-  function renderCreate() {
+  function renderReadiness() {
     const s = cur();
     const day = s.sliceDate;
     const st = dayStatus(s, day);
@@ -242,11 +242,14 @@
         '<div class="legend"><span><b style="background:#5BC08D"></b>就绪</span><span><b style="background:#E7B04A"></b>偏低</span><span><b style="background:#E06B6B"></b>缺数</span></div></div>' +
         '<div class="cal">' + renderCalendar() + '</div><div class="cal-detail">' + renderCalDetail() + '</div></div>'
       : '';
-    $('#panelCreate').innerHTML =
-      '<section class="box readiness"><div class="ready-row"><span class="ready-dot"></span><b>切片已就绪</b>' +
-        '<span class="ready-meta">切片日 ' + day + ' ' + s.sliceTime + ' · ' + ok + '/3 源就绪 · ' + (ok === 3 ? '59/59' : (56 + ok) + '/59') + ' 检查通过 · 7/7 表</span>' +
-        '<button class="btn sm ghost" data-toggle-cal> ' + (S.calOpen ? '收起日历' : '查看日历') + ' <svg viewBox="0 0 10 6" fill="none" style="width:9px;height:5px;transform:rotate(' + (S.calOpen ? 180 : 0) + 'deg)"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
-      '</div>' + cal + '</section>' + renderConfigForm();
+    return '<section class="box readiness"><div class="ready-row"><span class="ready-dot"></span><b>切片已就绪</b>' +
+      '<span class="ready-meta">切片日 ' + day + ' ' + s.sliceTime + ' · ' + ok + '/3 源就绪 · ' + (ok === 3 ? '59/59' : (56 + ok) + '/59') + ' 检查通过 · 7/7 表</span>' +
+      '<button class="btn sm ghost" data-toggle-cal> ' + (S.calOpen ? '收起日历' : '查看日历') + ' <svg viewBox="0 0 10 6" fill="none" style="width:9px;height:5px;transform:rotate(' + (S.calOpen ? 180 : 0) + 'deg)"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
+    '</div>' + cal + '</section>';
+  }
+
+  function renderCreate() {
+    $('#panelCreate').innerHTML = renderConfigForm();
   }
 
   /* ---------- group picker ---------- */
@@ -571,10 +574,10 @@
       const push = e.target.closest('[data-push]'); if (push && !push.disabled) { startPush(); return; }
       const comp = e.target.closest('[data-complete]'); if (comp) { completePush(); return; }
       const mock = e.target.closest('[data-mock]'); if (mock) { toast('概念版演示：' + mock.dataset.mock + ' 暂未接入'); return; }
-      const day = e.target.closest('.cal-col'); if (day) { S.selDay = day.dataset.day; renderCreate(); return; }
+      const day = e.target.closest('.cal-col'); if (day) { S.selDay = day.dataset.day; renderApp(); return; }
       const rm = e.target.closest('[data-remove-group]');
       if (rm) { const id = rm.dataset.removeGroup; if (S.groups.length === 1) { toast('至少保留一个客户分组'); return; } S.groups = S.groups.filter((x) => x !== id); renderApp(); return; }
-      if (e.target.closest('[data-toggle-cal]')) { S.calOpen = !S.calOpen; renderCreate(); return; }
+      if (e.target.closest('[data-toggle-cal]')) { S.calOpen = !S.calOpen; renderApp(); return; }
       if (e.target.closest('[data-open-groups]')) { openGroupPicker(); return; }
       if (e.target.closest('[data-close-picker]')) { closePicker(); return; }
       const pick = e.target.closest('[data-pick]');
