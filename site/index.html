@@ -160,6 +160,7 @@ body {
 .est { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin:11px 0 10px; padding-top:10px; border-top:1px solid var(--line); }
 .est div i { display:block; font-size:9.5px; color:var(--muted); font-style:normal; }
 .est div b { display:block; font-size:12px; font-weight:600; margin-top:2px; white-space:nowrap; }
+.est-note { margin-top:9px; font-size:10px; color:var(--faint); }
 .hint { margin-top:7px; font-size:10px; color:var(--faint); text-align:center; }
 
 .cfg { margin-top:10px; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
@@ -507,7 +508,7 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
 
   const S = {
     strategy: 'credit_offline', versionType: 'FORMAL',
-    groups: ['wallet_active'], lms: true, digiops: true, lmsAuto: false,
+    groups: ['wallet_active'],
     stage: 'prepare', selDay: '2026-10-23', startedOnce: false, pickerDraft: [], pickerSearch: '',
     running: false, pct: 0, timer: null, batch: null
   };
@@ -523,7 +524,7 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
     return {
       strategy: S.strategy, versionType: S.versionType, groups: S.groups.slice(),
       crowd, runMin: Math.max(1, Math.round(crowd / (s.speed * 10000) * 60)),
-      shards: Math.ceil(crowd / 4000), lms: S.lms, digiops: S.digiops, lmsAuto: S.lmsAuto
+      shards: Math.ceil(crowd / 4000)
     };
   }
 
@@ -628,24 +629,21 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
         '<div class="group-summary"><span>已选 <b>' + cfg.groups.length + '</b> 个 · 合计 <b>' + wan(cfg.crowd) + '</b></span><button class="btn sm" data-open-groups>选择分组</button></div>' +
         '<div class="group-chips">' + groups + '</div>' +
       '</div>' +
-      '<div class="est"><div><i>预计人数</i><b>' + wan(cfg.crowd) + '</b></div><div><i>分片</i><b>' + fmt(cfg.shards) + ' × 4,000</b></div><div><i>预计耗时</i><b>' + hhmm(totalMin(cfg)) + '</b></div></div>' +
+      '<div class="field"><label>发布目标</label><div class="static">LMS · 额度调整</div></div>' +
     '</section>';
   }
 
-  function renderPublishCard() {
-    return '<section class="box" style="margin-top:14px"><div class="box-head"><div><h3>发布目标</h3></div></div>' +
-      '<div class="groups" style="margin-top:9px">' +
-        '<button class="chk ' + (S.lms ? 'on' : '') + '" data-lms><span class="cbx"></span><span>LMS · 额度调整</span></button>' +
-        '<button class="chk ' + (S.digiops ? 'on' : '') + '" data-digiops><span class="cbx"></span><span>Digiops · 短信触达</span></button>' +
-      '</div>' +
-      '<div class="auto-row">允许 LMS 自动改额<span class="switch ' + (S.lmsAuto ? 'on' : '') + '" data-auto></span></div>' +
-    '</section>';
+  function renderEstimateCard() {
+    const cfg = snap();
+    return '<section class="box" style="margin-top:14px"><div class="box-head"><div><h3>本次跑批</h3></div></div>' +
+      '<div class="est" style="margin:9px 0 0;padding-top:0;border-top:0"><div><i>预计人数</i><b>' + wan(cfg.crowd) + '</b></div><div><i>分片</i><b>' + fmt(cfg.shards) + ' × 4,000</b></div><div><i>预计耗时</i><b>' + hhmm(totalMin(cfg)) + '</b></div></div>' +
+      '<div class="est-note">切片日 ' + cur().sliceDate + ' · 离线库单版本</div></section>';
   }
 
   function renderPrepare() {
     $('#panelPrepare').innerHTML = '<div class="prep-grid"><div class="prep-left"><section class="box"><div class="box-head"><div><h3>切片源健康日历</h3><p class="sub">' + md(dateISO(addDays(parseISO(cur().sliceDate), -13))) + ' → ' + md(cur().sliceDate) + '</p></div>' +
       '<div class="legend"><span><b style="background:#5BC08D"></b>就绪</span><span><b style="background:#E7B04A"></b>偏低</span><span><b style="background:#E06B6B"></b>缺数</span></div></div>' +
-      '<div class="cal">' + renderCalendar() + '</div><div class="cal-detail">' + renderCalDetail() + '</div></section>' + renderPublishCard() + '</div>' + renderConfigForm() + '</div>';
+      '<div class="cal">' + renderCalendar() + '</div><div class="cal-detail">' + renderCalDetail() + '</div></section>' + renderEstimateCard() + '</div>' + renderConfigForm() + '</div>';
   }
 
   /* ---------- group picker ---------- */
@@ -839,7 +837,7 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
       { t: '校验批次', s: b.pushStep >= 1 ? '已完成 · 明细已审批' : '待校验批次与明细', r: '' },
       { t: '创建 LMS 批次', s: b.pushStep >= 2 ? 'LMS 批次 ' + batchNo : '待创建 LMS 批次', r: '' },
       { t: '推送明细', s: wan(cfg.crowd) + ' 条待调额记录', r: '' },
-      { t: 'LMS 批量改额', s: cfg.lmsAuto ? '自动改额' : '需在 LMS 后台点【发起批量更新】', r: b.pushStep >= 5 ? '已完成' : '待发起' }
+      { t: 'LMS 批量改额', s: '需在 LMS 后台点【发起批量更新】', r: b.pushStep >= 5 ? '已完成' : '待发起' }
     ][i];
   }
 
@@ -850,10 +848,6 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
       return;
     }
     const cfg = b.config, s = STRATEGIES[cfg.strategy];
-    if (!cfg.lms) {
-      $('#panelPush').innerHTML = '<div class="box idle"><div class="big">本次未选择 LMS 发布目标</div><div class="sub">' + (cfg.digiops ? '仅推送 Digiops 短信；如要改额，请重新跑批并在配置里勾选 LMS' : 'LMS 与 Digiops 都未选择') + '</div><button class="btn primary" data-goto="prepare">去准备</button></div>';
-      return;
-    }
     const steps = [0, 1, 2, 3].map((i) => {
       const done = (i < 3 && b.pushStep > i) || (i === 3 && b.pushStep >= 5);
       const now = (b.pushStep === i + 1) || (i === 3 && b.pushStep === 4);
@@ -875,8 +869,7 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
       '<div class="big-split"><div class="up"><i>提额</i><b>' + wan(inc) + '</b></div><div class="down"><i>降额</i><b>' + wan(dec) + '</b></div><div><i>维持</i><b>' + wan(keep) + '</b></div></div>' +
       '<table class="list" style="margin-top:8px"><thead><tr><th>方向</th><th>区间</th><th class="r">人数</th><th class="r">占比</th></tr></thead><tbody>' + buckets + '</tbody></table></div>' +
       '<div class="box"><div class="box-head"><div><h3>推送至 LMS</h3><p class="sub">DE 批次 → LMS 批次 → 批量改额</p></div></div><div class="steps">' + steps + '</div>' +
-      (b.pushStep === 4 && !cfg.lmsAuto ? '<span class="demo-link" data-complete>演示：模拟 LMS 完成改额</span>' : '') +
-      '<div class="switch-row"><div>允许 LMS 自动改额<small>关闭时需在 LMS 后台点【发起批量更新】</small></div><span class="switch ' + (cfg.lmsAuto ? 'on' : '') + '" data-auto></span></div>' +
+      (b.pushStep === 4 ? '<span class="demo-link" data-complete>演示：模拟 LMS 完成改额</span>' : '') +
       '<button class="btn primary wide" data-push ' + (disabled ? 'disabled' : '') + '>' + btnText + '</button></div></div>' +
       '<div class="box" style="margin-top:14px"><div class="box-head"><div><h3>推送记录</h3></div></div><table class="list" style="margin-top:8px"><thead><tr><th>时间</th><th>LMS 批次</th><th>操作人</th><th class="r">明细条数</th><th>状态</th></tr></thead><tbody>' + recRows + '</tbody></table></div>';
   }
@@ -944,11 +937,11 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
 
   function startPush() {
     const b = S.batch;
-    if (!b || b.status !== 'completed' || b.pushStep >= 3 || !b.config.lms) return;
+    if (!b || b.status !== 'completed' || b.pushStep >= 3) return;
     b.pushStep = 1; renderAll();
     setTimeout(function () { b.pushStep = 2; renderAll(); }, 700);
     setTimeout(function () { b.pushStep = 3; b.pushedAt = nowText(); b.pushBatch = 'D' + b.id.slice(0, 8).replace(/_/g, '-') + '-01'; const st = STRATEGIES[b.config.strategy]; const row = st.history.find((x) => x[0] === b.id); if (row) row[5] = '已推送'; renderAll(); toast('已推送 LMS 批次 ' + b.pushBatch); }, 1500);
-    setTimeout(function () { b.pushStep = 4; renderAll(); if (b.config.lmsAuto) setTimeout(completePush, 1200); }, 2300);
+    setTimeout(function () { b.pushStep = 4; renderAll(); }, 2300);
   }
 
   function completePush() {
@@ -968,13 +961,6 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
       const stop = e.target.closest('[data-stop]'); if (stop) { stopRun(); return; }
       const go = e.target.closest('[data-goto]'); if (go) { setStage(go.dataset.goto); return; }
       const push = e.target.closest('[data-push]'); if (push && !push.disabled) { startPush(); return; }
-      const auto = e.target.closest('[data-auto]');
-      if (auto) {
-        S.lmsAuto = !S.lmsAuto;
-        if (S.batch) S.batch.config.lmsAuto = S.lmsAuto;
-        if (S.lmsAuto && S.batch && S.batch.pushStep === 4) setTimeout(completePush, 1200);
-        renderAll(); return;
-      }
       const comp = e.target.closest('[data-complete]'); if (comp) { completePush(); return; }
       const mock = e.target.closest('[data-mock]'); if (mock) { toast('概念版演示：' + mock.dataset.mock + ' 暂未接入'); return; }
       const day = e.target.closest('.cal-col'); if (day) { S.selDay = day.dataset.day; renderPrepare(); return; }
@@ -990,8 +976,6 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
       const st = e.target.closest('[data-strategy]');
       if (st) { S.strategy = st.dataset.strategy; S.versionType = 'FORMAL'; S.groups = [STRATEGIES[S.strategy].groups[0].id]; S.selDay = STRATEGIES[S.strategy].sliceDate; renderAll(); return; }
       const ver = e.target.closest('[data-version]'); if (ver) { S.versionType = ver.dataset.version; renderAll(); return; }
-      if (e.target.closest('[data-lms]')) { S.lms = !S.lms; renderAll(); return; }
-      if (e.target.closest('[data-digiops]')) { S.digiops = !S.digiops; renderAll(); return; }
     });
     $('#hideBtn').addEventListener('click', function () {
       const app = $('#app'); app.classList.toggle('collapsed');

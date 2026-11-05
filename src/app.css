@@ -153,6 +153,7 @@ body {
 .est { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin:11px 0 10px; padding-top:10px; border-top:1px solid var(--line); }
 .est div i { display:block; font-size:9.5px; color:var(--muted); font-style:normal; }
 .est div b { display:block; font-size:12px; font-weight:600; margin-top:2px; white-space:nowrap; }
+.est-note { margin-top:9px; font-size:10px; color:var(--faint); }
 .hint { margin-top:7px; font-size:10px; color:var(--faint); text-align:center; }
 
 .cfg { margin-top:10px; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
