@@ -198,6 +198,14 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
 .auto-row .switch.on:after { left:14px; }
 
 
+.input { width:100%; height:30px; border:1px solid var(--line); border-radius:7px; padding:0 9px; font:inherit; font-size:11.5px; color:var(--ink); outline:none; background:#fff; }
+.input:focus { border-color:#BFD6FF; box-shadow:0 0 0 3px rgba(80,149,255,.1); }
+.textarea { width:100%; min-height:50px; border:1px solid var(--line); border-radius:7px; padding:7px 9px; font:inherit; font-size:11.5px; color:var(--ink); outline:none; resize:none; background:#fff; }
+.textarea:focus { border-color:#BFD6FF; box-shadow:0 0 0 3px rgba(80,149,255,.1); }
+.req { color:var(--red); font-style:normal; margin-left:2px; }
+.row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.row2 .field { margin-top:10px; }
+
 /* group summary + picker */
 .group-summary { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:10.5px; color:var(--muted); }
 .group-summary b { color:var(--ink); font-weight:600; }

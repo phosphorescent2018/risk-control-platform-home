@@ -78,7 +78,7 @@
   };
 
   const S = {
-    strategy: 'credit_offline', versionType: 'FORMAL',
+    strategy: 'credit_offline', versionType: 'FORMAL', batchName: '', desc: '',
     groups: ['wallet_active'],
     stage: 'prepare', selDay: '2026-10-23', startedOnce: false, pickerDraft: [], pickerSearch: '',
     running: false, pct: 0, timer: null, batch: null
@@ -117,7 +117,7 @@
 
   function renderHeader() {
     const s = cur();
-    $('#batchLabel').textContent = S.startedOnce && S.batch ? S.batch.id : '新建跑批';
+    $('#batchLabel').textContent = S.startedOnce && S.batch ? (S.batch.name || S.batch.id) : '新建跑批';
     $('#sliceDate').textContent = s.sliceDate;
     $('#sliceTime').textContent = s.sliceTime;
     const b = badgeInfo();
@@ -189,18 +189,19 @@
     return '<section class="box form-box">' +
       '<div class="box-head"><div><h3>跑批配置</h3><p class="sub">选择本次跑批使用的策略与范围</p></div></div>' +
       '<div class="field"><label>业务线</label><div class="static">MTN_Uganda</div></div>' +
+      '<div class="field"><label>批次名称<i class="req">*</i></label><input class="input" id="batchName" placeholder="例如：贷前-1105" value="' + (S.batchName || '').replace(/"/g, '&quot;') + '"></div>' +
       '<div class="field"><label>策略</label><div class="opts">' + opts + '</div></div>' +
-      '<div class="field"><label>版本</label><div class="ver-row">' +
-        (s.beta
-          ? '<div class="seg"><button data-version="FORMAL" class="' + (S.versionType === 'FORMAL' ? 'on' : '') + '">Official</button><button data-version="BETA" class="' + (S.versionType === 'BETA' ? 'on' : '') + '">Test</button></div><span class="ver">' + version + '</span>'
-          : '<span class="ver-pill">Official · ' + s.official + '</span>') +
-      '</div></div>' +
-      '<div class="field"><label>产品</label><div class="static">' + s.product + '</div></div>' +
+      '<div class="row2">' +
+        '<div class="field"><label>版本类型</label>' + (s.beta
+          ? '<div class="seg"><button data-version="FORMAL" class="' + (S.versionType === 'FORMAL' ? 'on' : '') + '">Official</button><button data-version="BETA" class="' + (S.versionType === 'BETA' ? 'on' : '') + '">Test</button></div>'
+          : '<div class="static">Official</div>') + '</div>' +
+        '<div class="field"><label>策略版本</label><div class="static">' + version + '</div></div>' +
+      '</div>' +
+      '<div class="field"><label>描述</label><textarea class="textarea" id="batchDesc" rows="2" placeholder="可选">' + (S.desc || '') + '</textarea></div>' +
       '<div class="field"><label>客户分组</label>' +
         '<div class="group-summary"><span>已选 <b>' + cfg.groups.length + '</b> 个 · 合计 <b>' + wan(cfg.crowd) + '</b></span><button class="btn sm" data-open-groups>选择分组</button></div>' +
         '<div class="group-chips">' + groups + '</div>' +
       '</div>' +
-      '<div class="field"><label>发布目标</label><div class="static">LMS · 额度调整</div></div>' +
     '</section>';
   }
 
@@ -384,8 +385,8 @@
     const res = s.res.map((r) => '<div class="res-row"><span>' + r.k + '</span><span class="bar"><i style="width:' + r.p + '%"></i></span><span class="num">' + r.v + '</span></div>').join('');
     const anom = s.anomalies.map((a) => '<li class="' + (a.lv === 'bad' ? 'bad' : '') + '"><span class="pin"></span><div><b>' + a.t + '</b> <span>' + a.d + '</span></div></li>').join('');
 
-    $('#panelReport').innerHTML = '<div class="rep-head"><div><div class="t">' + b.id + '</div>' +
-      '<div class="s">' + s.label + ' ' + version + ' · ' + groupNames + ' · 切片日 ' + s.sliceDate + ' · ' + b.started + ' → ' + b.ended + '</div></div>' +
+    $('#panelReport').innerHTML = '<div class="rep-head"><div><div class="t">' + (b.name || b.id) + '</div>' +
+      '<div class="s">' + b.id + ' · ' + s.label + ' ' + version + ' · ' + groupNames + ' · 切片日 ' + s.sliceDate + ' · ' + b.started + ' → ' + b.ended + '</div></div>' +
       '<div class="actions"><button class="btn sm" data-mock="导出报告">导出报告</button><button class="btn sm" data-mock="完整事件报告">完整事件报告</button></div></div>' +
       '<div class="kpis">' + kpis + '</div>' +
       '<div class="box tl"><div class="box-head"><div><h3>时间线</h3><p class="sub">切片搬运 → 等待启动 → 跑批执行</p></div><span class="sub">总耗时 ' + hhmm(total) + '</span></div>' +
@@ -474,11 +475,12 @@
 
   function startRun() {
     if (S.running) return;
+    if (!S.batchName.trim()) { toast('请填写批次名称'); const el = $('#batchName'); if (el) el.focus(); return; }
     const cfg = snap();
     if (cfg.crowd <= 0) { toast('至少选择一个客户分组'); return; }
     S.running = true; S.pct = 0;
     S.startedOnce = true;
-    S.batch = { id: nextBatchId(), status: 'running', started: nowText(), ended: '', config: cfg, pushStep: 0, pushBatch: null, pushedAt: null };
+    S.batch = { id: nextBatchId(), name: S.batchName.trim(), desc: S.desc.trim(), status: 'running', started: nowText(), ended: '', config: cfg, pushStep: 0, pushBatch: null, pushedAt: null };
     setStage('run');
     if (S.timer) clearInterval(S.timer);
     S.timer = setInterval(function () {
@@ -547,6 +549,10 @@
       const st = e.target.closest('[data-strategy]');
       if (st) { S.strategy = st.dataset.strategy; S.versionType = 'FORMAL'; S.groups = [STRATEGIES[S.strategy].groups[0].id]; S.selDay = STRATEGIES[S.strategy].sliceDate; renderAll(); return; }
       const ver = e.target.closest('[data-version]'); if (ver) { S.versionType = ver.dataset.version; renderAll(); return; }
+    });
+    document.addEventListener('input', function (e) {
+      if (e.target.id === 'batchName') S.batchName = e.target.value;
+      if (e.target.id === 'batchDesc') S.desc = e.target.value;
     });
     $('#hideBtn').addEventListener('click', function () {
       const app = $('#app'); app.classList.toggle('collapsed');
