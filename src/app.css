@@ -166,6 +166,22 @@ table.list tr:last-child td { border-bottom:0; }
 table.list td.r, table.list th.r { text-align:right; }
 table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:10.5px; color:var(--muted); }
 
+/* readiness strip */
+.readiness { padding:14px 16px; }
+.ready-row { display:flex; align-items:center; gap:9px; }
+.ready-dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 0 3px rgba(31,157,107,.12); flex:0 0 7px; }
+.ready-row b { font-size:12.5px; font-weight:600; }
+.ready-meta { font-size:11px; color:var(--muted); }
+.ready-row .btn { margin-left:auto; color:var(--blue-deep); }
+.ready-body { margin-top:12px; border-top:1px solid var(--line); padding-top:10px; }
+.cal-head { display:flex; align-items:center; justify-content:space-between; font-size:10px; color:var(--faint); margin-bottom:7px; }
+.ready-body .cal { margin-top:0; }
+.ready-body .cal-col { padding:9px 4px 7px; }
+.ready-body .cal-bars i { height:5px; }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 20px; }
+.form-grid .field { margin-top:10px; }
+.form-grid .span2 { grid-column:span 2; }
+
 /* config form */
 .form-box .box-head { margin-bottom:2px; }
 .field { margin-top:10px; }

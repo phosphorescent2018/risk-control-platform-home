@@ -173,6 +173,22 @@ table.list tr:last-child td { border-bottom:0; }
 table.list td.r, table.list th.r { text-align:right; }
 table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:10.5px; color:var(--muted); }
 
+/* readiness strip */
+.readiness { padding:14px 16px; }
+.ready-row { display:flex; align-items:center; gap:9px; }
+.ready-dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 0 3px rgba(31,157,107,.12); flex:0 0 7px; }
+.ready-row b { font-size:12.5px; font-weight:600; }
+.ready-meta { font-size:11px; color:var(--muted); }
+.ready-row .btn { margin-left:auto; color:var(--blue-deep); }
+.ready-body { margin-top:12px; border-top:1px solid var(--line); padding-top:10px; }
+.cal-head { display:flex; align-items:center; justify-content:space-between; font-size:10px; color:var(--faint); margin-bottom:7px; }
+.ready-body .cal { margin-top:0; }
+.ready-body .cal-col { padding:9px 4px 7px; }
+.ready-body .cal-bars i { height:5px; }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 20px; }
+.form-grid .field { margin-top:10px; }
+.form-grid .span2 { grid-column:span 2; }
+
 /* config form */
 .form-box .box-head { margin-bottom:2px; }
 .field { margin-top:10px; }
@@ -515,7 +531,7 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
   const S = {
     strategy: 'credit_offline', versionType: 'FORMAL', batchName: '', desc: '',
     groups: ['wallet_active'],
-    stage: 'prepare', selDay: '2026-10-23', startedOnce: false, pickerDraft: [], pickerSearch: '',
+    stage: 'prepare', selDay: '2026-10-23', startedOnce: false, calOpen: false, pickerDraft: [], pickerSearch: '',
     running: false, pct: 0, timer: null, batch: null
   };
 
@@ -617,39 +633,46 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
     const opts = Object.values(STRATEGIES).map((x) =>
       '<button class="opt ' + (x.key === S.strategy ? 'on' : '') + '" data-strategy="' + x.key + '"><b>' + x.label + '</b><i>' + x.scene + ' · ' + x.official + '</i></button>'
     ).join('');
-    const groups = s.groups.filter((g) => S.groups.includes(g.id)).map((g) =>
+    const chips = s.groups.filter((g) => S.groups.includes(g.id)).map((g) =>
       '<span class="gchip">' + g.name + '<i data-remove-group="' + g.id + '">×</i></span>'
     ).join('');
+    const field = (label, inner, cls) => '<div class="field ' + (cls || '') + '"><label>' + label + '</label>' + inner + '</div>';
     return '<section class="box form-box">' +
-      '<div class="box-head"><div><h3>跑批配置</h3><p class="sub">选择本次跑批使用的策略与范围</p></div></div>' +
-      '<div class="field"><label>业务线</label><div class="static">MTN_Uganda</div></div>' +
-      '<div class="field"><label>批次名称<i class="req">*</i></label><input class="input" id="batchName" placeholder="例如：贷前-1105" value="' + (S.batchName || '').replace(/"/g, '&quot;') + '"></div>' +
-      '<div class="field"><label>策略</label><div class="opts">' + opts + '</div></div>' +
-      '<div class="row2">' +
-        '<div class="field"><label>版本类型</label>' + (s.beta
+      '<div class="box-head"><div><h3>跑批配置</h3></div></div>' +
+      '<div class="form-grid">' +
+        field('业务线', '<div class="static">MTN_Uganda</div>') +
+        field('批次名称<i class="req">*</i>', '<input class="input" id="batchName" placeholder="例如：贷前-1105" value="' + (S.batchName || '').replace(/"/g, '&quot;') + '">') +
+        field('策略', '<div class="opts">' + opts + '</div>', 'span2') +
+        field('版本类型', s.beta
           ? '<div class="seg"><button data-version="FORMAL" class="' + (S.versionType === 'FORMAL' ? 'on' : '') + '">Official</button><button data-version="BETA" class="' + (S.versionType === 'BETA' ? 'on' : '') + '">Test</button></div>'
-          : '<div class="static">Official</div>') + '</div>' +
-        '<div class="field"><label>策略版本</label><div class="static">' + version + '</div></div>' +
-      '</div>' +
-      '<div class="field"><label>描述</label><textarea class="textarea" id="batchDesc" rows="2" placeholder="可选">' + (S.desc || '') + '</textarea></div>' +
-      '<div class="field"><label>客户分组</label>' +
-        '<div class="group-summary"><span>已选 <b>' + cfg.groups.length + '</b> 个 · 合计 <b>' + wan(cfg.crowd) + '</b></span><button class="btn sm" data-open-groups>选择分组</button></div>' +
-        '<div class="group-chips">' + groups + '</div>' +
+          : '<div class="static">Official</div>') +
+        field('策略版本', '<div class="static">' + version + '</div>') +
+        field('描述', '<textarea class="textarea" id="batchDesc" rows="2" placeholder="可选">' + (S.desc || '') + '</textarea>', 'span2') +
+        field('客户分组',
+          '<div class="group-summary"><span>已选 <b>' + cfg.groups.length + '</b> 个 · 合计 <b>' + wan(cfg.crowd) + '</b></span><button class="btn sm" data-open-groups>选择分组</button></div>' +
+          '<div class="group-chips">' + chips + '</div>', 'span2') +
       '</div>' +
     '</section>';
   }
 
-  function renderEstimateCard() {
-    const cfg = snap();
-    return '<section class="box" style="margin-top:14px"><div class="box-head"><div><h3>本次跑批</h3></div></div>' +
-      '<div class="est" style="margin:9px 0 0;padding-top:0;border-top:0"><div><i>预计人数</i><b>' + wan(cfg.crowd) + '</b></div><div><i>分片</i><b>' + fmt(cfg.shards) + ' × 4,000</b></div><div><i>预计耗时</i><b>' + hhmm(totalMin(cfg)) + '</b></div></div>' +
-      '<div class="est-note">切片日 ' + cur().sliceDate + ' · 离线库单版本</div></section>';
-  }
-
   function renderPrepare() {
-    $('#panelPrepare').innerHTML = '<div class="prep-grid"><div class="prep-left"><section class="box"><div class="box-head"><div><h3>切片源健康日历</h3><p class="sub">' + md(dateISO(addDays(parseISO(cur().sliceDate), -13))) + ' → ' + md(cur().sliceDate) + '</p></div>' +
-      '<div class="legend"><span><b style="background:#5BC08D"></b>就绪</span><span><b style="background:#E7B04A"></b>偏低</span><span><b style="background:#E06B6B"></b>缺数</span></div></div>' +
-      '<div class="cal">' + renderCalendar() + '</div><div class="cal-detail">' + renderCalDetail() + '</div></section>' + renderEstimateCard() + '</div>' + renderConfigForm() + '</div>';
+    const s = cur();
+    const day = s.sliceDate;
+    const st = dayStatus(s, day);
+    const ok = [st.wallet, st.od, st.pool].filter((v) => v === 0).length;
+    const cal = S.calOpen
+      ? '<div class="ready-body"><div class="cal-head"><span>' + md(dateISO(addDays(parseISO(day), -13))) + ' → ' + md(day) + '</span>' +
+        '<div class="legend"><span><b style="background:#5BC08D"></b>就绪</span><span><b style="background:#E7B04A"></b>偏低</span><span><b style="background:#E06B6B"></b>缺数</span></div></div>' +
+        '<div class="cal">' + renderCalendar() + '</div><div class="cal-detail">' + renderCalDetail() + '</div></div>'
+      : '';
+    $('#panelPrepare').innerHTML =
+      '<section class="box readiness">' +
+        '<div class="ready-row">' +
+          '<span class="ready-dot"></span><b>切片已就绪</b>' +
+          '<span class="ready-meta">切片日 ' + day + ' ' + s.sliceTime + ' · ' + ok + '/3 源就绪 · ' + (ok === 3 ? '59/59' : (56 + ok) + '/59') + ' 检查通过 · 7/7 表</span>' +
+          '<button class="btn sm ghost" data-toggle-cal> ' + (S.calOpen ? '收起日历' : '查看日历') + ' <svg viewBox="0 0 10 6" fill="none" style="width:9px;height:5px;transform:rotate(' + (S.calOpen ? 180 : 0) + 'deg)"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
+        '</div>' + cal +
+      '</section>' + renderConfigForm();
   }
 
   /* ---------- group picker ---------- */
@@ -973,6 +996,7 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
       const day = e.target.closest('.cal-col'); if (day) { S.selDay = day.dataset.day; renderPrepare(); return; }
       const rm = e.target.closest('[data-remove-group]');
       if (rm) { const id = rm.dataset.removeGroup; if (S.groups.length === 1) { toast('至少保留一个客户分组'); return; } S.groups = S.groups.filter((x) => x !== id); renderAll(); return; }
+      if (e.target.closest('[data-toggle-cal]')) { S.calOpen = !S.calOpen; renderPrepare(); return; }
       if (e.target.closest('[data-open-groups]')) { openGroupPicker(); return; }
       if (e.target.closest('[data-close-picker]')) { closePicker(); return; }
       const pick = e.target.closest('[data-pick]');
