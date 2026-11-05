@@ -29,8 +29,10 @@
       product: 'MTN_UG_APP', speed: 217, waitMin: 22,
       sliceDate: '2026-10-23', sliceTime: '22:13',
       groups: [
-        { id: 'wallet_active', name: '贷前活跃钱包户', crowd: 38729000 },
-        { id: 'wallet_high', name: '高价值提额候选', crowd: 1240000 }
+        { id: 'wallet_active', name: '贷前活跃钱包户', crowd: 38729000, updated: '2026-11-05 05:19:06', desc: 'product_code Equal MoMoAdvance' },
+        { id: 'wallet_high', name: '高价值提额候选', crowd: 1240000, updated: '2026-11-04 22:10:31', desc: 'credit_limit > 0 AND risk_level P' },
+        { id: 'wallet_silent', name: '沉默户回捞', crowd: 2310000, updated: '2026-11-03 18:02:44', desc: '30 天无交易 AND 未 optout' },
+        { id: 'wallet_sample', name: '模型样本 Test', crowd: 50000, updated: '2026-11-01 09:30:12', desc: 'model_sample = 1' }
       ],
       demoBatch: '459_20261028091106', demoStart: '2026-10-28 09:11:06', demoEnd: '2026-10-29 04:26:20',
       days: [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
@@ -54,8 +56,9 @@
       product: 'MTN_UG_APP', speed: 604, waitMin: 73,
       sliceDate: '2026-10-05', sliceTime: '22:13',
       groups: [
-        { id: 'loan_in', name: '贷中在贷户', crowd: 6492000 },
-        { id: 'loan_high', name: '高价值在贷户', crowd: 860000 }
+        { id: 'loan_in', name: '贷中在贷户', crowd: 6492000, updated: '2026-11-05 05:22:32', desc: 'product_code Equal MoMoAdvance AND in_loan = 1' },
+        { id: 'loan_high', name: '高价值在贷户', crowd: 860000, updated: '2026-11-04 21:40:10', desc: 'current_limit >= 50000' },
+        { id: 'loan_cut', name: '降额实验组', crowd: 320000, updated: '2026-11-02 16:05:55', desc: 'experiment_group = cut' }
       ],
       demoBatch: '460_20261027085645', demoStart: '2026-10-27 08:56:45', demoEnd: '2026-10-27 12:18:00',
       days: [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
@@ -77,7 +80,7 @@
   const S = {
     strategy: 'credit_offline', versionType: 'FORMAL',
     groups: ['wallet_active'], lms: true, digiops: true, lmsAuto: false,
-    stage: 'prepare', selDay: '2026-10-23', startedOnce: false,
+    stage: 'prepare', selDay: '2026-10-23', startedOnce: false, pickerDraft: [], pickerSearch: '',
     running: false, pct: 0, timer: null, batch: null
   };
 
@@ -180,8 +183,8 @@
     const opts = Object.values(STRATEGIES).map((x) =>
       '<button class="opt ' + (x.key === S.strategy ? 'on' : '') + '" data-strategy="' + x.key + '"><b>' + x.label + '</b><i>' + x.scene + ' · ' + x.official + '</i></button>'
     ).join('');
-    const groups = s.groups.map((g) =>
-      '<button class="chk ' + (S.groups.includes(g.id) ? 'on' : '') + '" data-group="' + g.id + '"><span class="cbx"></span><span>' + g.name + '</span><em>' + wan(g.crowd) + '</em></button>'
+    const groups = s.groups.filter((g) => S.groups.includes(g.id)).map((g) =>
+      '<span class="gchip">' + g.name + '<i data-remove-group="' + g.id + '">×</i></span>'
     ).join('');
     return '<section class="box form-box">' +
       '<div class="box-head"><div><h3>跑批配置</h3><p class="sub">选择本次跑批使用的策略与范围</p></div></div>' +
@@ -193,32 +196,61 @@
           : '<span class="ver-pill">Official · ' + s.official + '</span>') +
       '</div></div>' +
       '<div class="field"><label>产品</label><div class="static">' + s.product + '</div></div>' +
-      '<div class="field"><label>客户分组</label><div class="groups">' + groups + '</div></div>' +
-      '<div class="field"><label>发布目标</label><div class="groups">' +
-        '<button class="chk ' + (S.lms ? 'on' : '') + '" data-lms><span class="cbx"></span><span>LMS · 额度调整</span></button>' +
-        '<button class="chk ' + (S.digiops ? 'on' : '') + '" data-digiops><span class="cbx"></span><span>Digiops · 短信触达</span></button>' +
+      '<div class="field"><label>客户分组</label>' +
+        '<div class="group-summary"><span>已选 <b>' + cfg.groups.length + '</b> 个 · 合计 <b>' + wan(cfg.crowd) + '</b></span><button class="btn sm" data-open-groups>选择分组</button></div>' +
+        '<div class="group-chips">' + groups + '</div>' +
       '</div>' +
-      '<div class="auto-row">允许 LMS 自动改额<span class="switch ' + (S.lmsAuto ? 'on' : '') + '" data-auto></span></div></div>' +
       '<div class="est"><div><i>预计人数</i><b>' + wan(cfg.crowd) + '</b></div><div><i>分片</i><b>' + fmt(cfg.shards) + ' × 4,000</b></div><div><i>预计耗时</i><b>' + hhmm(totalMin(cfg)) + '</b></div></div>' +
     '</section>';
   }
 
-  function renderHistory() {
-    const s = cur();
-    const rows = s.history.map((r) => {
-      const cls = r[5] === '待推送' ? 'warn' : r[5] === '已改额' ? 'ok' : 'warn';
-      return '<tr><td class="mono">' + r[0] + '</td><td>' + r[1] + '</td><td class="r">' + r[2] + '</td><td class="r">' + r[4] + '</td><td><span class="tag ' + cls + '">' + r[5] + '</span></td></tr>';
-    }).join('');
-    return '<section class="box"><div class="box-head"><div><h3>最近批次</h3></div></div>' +
-      '<table class="list" style="margin-top:8px"><thead><tr><th>批次</th><th>切片日</th><th class="r">人数</th><th class="r">耗时</th><th>推送</th></tr></thead><tbody>' + rows + '</tbody></table></section>';
+  function renderPublishCard() {
+    return '<section class="box" style="margin-top:14px"><div class="box-head"><div><h3>发布目标</h3></div></div>' +
+      '<div class="groups" style="margin-top:9px">' +
+        '<button class="chk ' + (S.lms ? 'on' : '') + '" data-lms><span class="cbx"></span><span>LMS · 额度调整</span></button>' +
+        '<button class="chk ' + (S.digiops ? 'on' : '') + '" data-digiops><span class="cbx"></span><span>Digiops · 短信触达</span></button>' +
+      '</div>' +
+      '<div class="auto-row">允许 LMS 自动改额<span class="switch ' + (S.lmsAuto ? 'on' : '') + '" data-auto></span></div>' +
+    '</section>';
   }
 
   function renderPrepare() {
-    $('#panelPrepare').innerHTML = '<div class="prep-grid"><div class="prep-left">' +
-      '<section class="box"><div class="box-head"><div><h3>切片源健康日历</h3><p class="sub">' + md(dateISO(addDays(parseISO(cur().sliceDate), -13))) + ' → ' + md(cur().sliceDate) + '</p></div>' +
-        '<div class="legend"><span><b style="background:#5BC08D"></b>就绪</span><span><b style="background:#E7B04A"></b>偏低</span><span><b style="background:#E06B6B"></b>缺数</span></div></div>' +
-        '<div class="cal">' + renderCalendar() + '</div><div class="cal-detail">' + renderCalDetail() + '</div></section>' +
-      renderHistory() + '</div>' + renderConfigForm() + '</div>';
+    $('#panelPrepare').innerHTML = '<div class="prep-grid"><div class="prep-left"><section class="box"><div class="box-head"><div><h3>切片源健康日历</h3><p class="sub">' + md(dateISO(addDays(parseISO(cur().sliceDate), -13))) + ' → ' + md(cur().sliceDate) + '</p></div>' +
+      '<div class="legend"><span><b style="background:#5BC08D"></b>就绪</span><span><b style="background:#E7B04A"></b>偏低</span><span><b style="background:#E06B6B"></b>缺数</span></div></div>' +
+      '<div class="cal">' + renderCalendar() + '</div><div class="cal-detail">' + renderCalDetail() + '</div></section>' + renderPublishCard() + '</div>' + renderConfigForm() + '</div>';
+  }
+
+  /* ---------- group picker ---------- */
+  function openGroupPicker() {
+    S.pickerDraft = S.groups.slice();
+    S.pickerSearch = '';
+    renderPicker();
+  }
+
+  function closePicker() { $('#modalRoot').innerHTML = ''; }
+
+  function renderPicker() {
+    const s = cur();
+    const q = (S.pickerSearch || '').trim().toLowerCase();
+    const list = s.groups.filter((g) => !q || g.name.toLowerCase().includes(q));
+    const draft = S.pickerDraft || [];
+    const total = s.groups.filter((g) => draft.includes(g.id)).reduce((a, g) => a + g.crowd, 0);
+    const rows = list.map((g) => {
+      const on = draft.includes(g.id);
+      return '<button class="grow ' + (on ? 'on' : '') + '" data-pick="' + g.id + '"><span class="cbx"></span><span class="gname">' + g.name + '<i>' + (g.desc || '') + '</i></span><span class="gnum">' + fmt(g.crowd) + '</span><span class="gtime">' + (g.updated || '-') + '</span></button>';
+    }).join('');
+    $('#modalRoot').innerHTML = '<div class="modal-mask" data-close-picker></div><div class="picker">' +
+      '<div class="picker-head"><div><h3>选择客户分组</h3><p>按名称搜索，可多选</p></div><button class="picker-x" data-close-picker>×</button></div>' +
+      '<div class="picker-search"><input id="gSearch" placeholder="搜索分组名称" value="' + (S.pickerSearch || '').replace(/"/g, '&quot;') + '"></div>' +
+      '<div class="picker-table"><div class="ghead"><span></span><span>分组</span><span class="r">人数</span><span class="r">更新时间</span></div>' + (rows || '<div class="gempty">没有匹配的分组</div>') + '</div>' +
+      '<div class="picker-foot"><span>已选 <b>' + draft.length + '</b> 个 · 合计 <b>' + wan(total) + '</b></span><div><button class="btn sm ghost" data-picker-reset>重置</button><button class="btn sm" data-close-picker>取消</button><button class="btn sm primary" data-picker-ok ' + (draft.length ? '' : 'disabled') + '>确定</button></div></div>' +
+    '</div>';
+    const input = $('#gSearch');
+    if (input) input.addEventListener('input', function (e) {
+      S.pickerSearch = e.target.value;
+      renderPicker();
+      const i = $('#gSearch'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+    });
   }
 
   /* ---------- run ---------- */
@@ -518,16 +550,18 @@
       const comp = e.target.closest('[data-complete]'); if (comp) { completePush(); return; }
       const mock = e.target.closest('[data-mock]'); if (mock) { toast('概念版演示：' + mock.dataset.mock + ' 暂未接入'); return; }
       const day = e.target.closest('.cal-col'); if (day) { S.selDay = day.dataset.day; renderPrepare(); return; }
+      const rm = e.target.closest('[data-remove-group]');
+      if (rm) { const id = rm.dataset.removeGroup; if (S.groups.length === 1) { toast('至少保留一个客户分组'); return; } S.groups = S.groups.filter((x) => x !== id); renderAll(); return; }
+      if (e.target.closest('[data-open-groups]')) { openGroupPicker(); return; }
+      if (e.target.closest('[data-close-picker]')) { closePicker(); return; }
+      const pick = e.target.closest('[data-pick]');
+      if (pick) { const id = pick.dataset.pick; if (S.pickerDraft.includes(id)) S.pickerDraft = S.pickerDraft.filter((x) => x !== id); else S.pickerDraft.push(id); renderPicker(); return; }
+      if (e.target.closest('[data-picker-reset]')) { S.pickerDraft = []; renderPicker(); return; }
+      const ok = e.target.closest('[data-picker-ok]');
+      if (ok && !ok.disabled) { S.groups = S.pickerDraft.slice(); closePicker(); renderAll(); return; }
       const st = e.target.closest('[data-strategy]');
       if (st) { S.strategy = st.dataset.strategy; S.versionType = 'FORMAL'; S.groups = [STRATEGIES[S.strategy].groups[0].id]; S.selDay = STRATEGIES[S.strategy].sliceDate; renderAll(); return; }
       const ver = e.target.closest('[data-version]'); if (ver) { S.versionType = ver.dataset.version; renderAll(); return; }
-      const grp = e.target.closest('[data-group]');
-      if (grp) {
-        const id = grp.dataset.group;
-        if (S.groups.includes(id)) { if (S.groups.length === 1) { toast('至少保留一个客户分组'); return; } S.groups = S.groups.filter((x) => x !== id); }
-        else S.groups.push(id);
-        renderAll(); return;
-      }
       if (e.target.closest('[data-lms]')) { S.lms = !S.lms; renderAll(); return; }
       if (e.target.closest('[data-digiops]')) { S.digiops = !S.digiops; renderAll(); return; }
     });
