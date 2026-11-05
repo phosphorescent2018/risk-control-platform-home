@@ -57,30 +57,16 @@
 
     <div class="content">
       <div class="card ws">
-        <div class="ws-head">
-          <div class="ws-top">
-            <div class="ws-left">
-              <div class="ws-h1">跑批作业处理</div>
-            </div>
-            <div class="ws-right">
-              <div class="slice-chip"><span>切片日</span><b id="sliceDate">2026-10-23</b><i id="sliceTime">22:13</i></div>
-              <span class="badge" id="runBadge">已完成</span>
-            </div>
-          </div>
-        </div>
-
-        <nav class="stages" id="stages">
-          <button class="stage active" data-stage="prepare" type="button"><span class="st-no">01</span><span class="st-body"><b>准备</b><i id="stPrepare">切片源健康 · 就绪</i></span><span class="st-flag" id="flagPrepare"></span></button>
-          <button class="stage" data-stage="run" type="button"><span class="st-no">02</span><span class="st-body"><b>执行</b><i id="stRun">无运行中批次</i></span><span class="st-flag" id="flagRun"></span></button>
-          <button class="stage" data-stage="report" type="button"><span class="st-no">03</span><span class="st-body"><b>报告</b><i id="stReport">459 批 · 已出报告</i></span><span class="st-flag" id="flagReport"></span></button>
-          <button class="stage" data-stage="push" type="button"><span class="st-no">04</span><span class="st-body"><b>推送</b><i id="stPush">已推送 LMS</i></span><span class="st-flag" id="flagPush"></span></button>
+        <div id="wsHead"></div>
+        <nav class="stages three" id="stages" hidden>
+          <button class="stage" data-tab="run" type="button"><span class="st-no">01</span><span class="st-body"><b>执行</b><i id="stRun">—</i></span><span class="st-flag" id="flagRun"></span></button>
+          <button class="stage" data-tab="report" type="button"><span class="st-no">02</span><span class="st-body"><b>报告</b><i id="stReport">—</i></span><span class="st-flag" id="flagReport"></span></button>
+          <button class="stage" data-tab="push" type="button"><span class="st-no">03</span><span class="st-body"><b>推送</b><i id="stPush">—</i></span><span class="st-flag" id="flagPush"></span></button>
         </nav>
-
-        <div class="panel-wrap" id="panelWrap">
-          <section class="panel active" data-panel="prepare" id="panelPrepare"></section>
-          <section class="panel" data-panel="run" id="panelRun"></section>
-          <section class="panel" data-panel="report" id="panelReport"></section>
-          <section class="panel" data-panel="push" id="panelPush"></section>
+        <div class="panel-wrap">
+          <section class="panel" id="panelList"></section>
+          <section class="panel" id="panelCreate"></section>
+          <section class="panel" id="panelDetail"></section>
         </div>
       </div>
     </div>

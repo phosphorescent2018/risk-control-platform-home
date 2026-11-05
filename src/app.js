@@ -1,4 +1,4 @@
-/* 跑批作业处理 · 概念版（准备阶段直接配置，无 task list） */
+/* 跑批作业处理 · 概念版：跑批记录 → 新建跑批 → 批次详情（执行/报告/推送） */
 (function () {
   'use strict';
 
@@ -16,7 +16,7 @@
   const parseISO = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
   const addDays = (dt, n) => { const x = new Date(dt.getTime()); x.setDate(x.getDate() + n); return x; };
   const dateISO = (dt) => dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate());
-  const md = (s) => s.slice(5).replace('-', '-');
+  const md = (s) => s.slice(5);
   const fmtDT = (d) => {
     const u = new Date(d.getTime() + 3 * 3600 * 1000);
     return u.getUTCFullYear() + '-' + pad(u.getUTCMonth() + 1) + '-' + pad(u.getUTCDate()) + ' ' + pad(u.getUTCHours()) + ':' + pad(u.getUTCMinutes()) + ':' + pad(u.getUTCSeconds());
@@ -34,7 +34,6 @@
         { id: 'wallet_silent', name: '沉默户回捞', crowd: 2310000, updated: '2026-11-03 18:02:44', desc: '30 天无交易 AND 未 optout' },
         { id: 'wallet_sample', name: '模型样本 Test', crowd: 50000, updated: '2026-11-01 09:30:12', desc: 'model_sample = 1' }
       ],
-      demoBatch: '459_20261028091106', demoStart: '2026-10-28 09:11:06', demoEnd: '2026-10-29 04:26:20',
       days: [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
       odDays: [0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0],
       counts: [44443983, 12287629, 90177900], medians: [43900000, 12150000, 89100000],
@@ -43,12 +42,6 @@
         { lv: 'warn', t: '分片重试 12 次', d: '均在 3 次内成功，无失败分片' },
         { lv: 'warn', t: '切片搬运较上一批晚 38 分钟', d: '06:40 开始，07:43 就绪' },
         { lv: 'bad', t: '磁盘写入峰值 98%', d: '10-28 21:20 前后，持续约 6 分钟' }
-      ],
-      history: [
-        ['459_20261028091106', '10-23', '3,872.9 万', '已完成', '19h15m', '待推送'],
-        ['458_20261016072310', '10-12', '3,864.2 万', '已推送', '18h52m', '已改额'],
-        ['457_20261005064520', '10-01', '3,851.7 万', '已推送', '20h06m', '已改额'],
-        ['456_20260923091840', '09-19', '3,840.3 万', '已推送', '19h41m', '已改额']
       ]
     },
     Dai_Zhong: {
@@ -60,7 +53,6 @@
         { id: 'loan_high', name: '高价值在贷户', crowd: 860000, updated: '2026-11-04 21:40:10', desc: 'current_limit >= 50000' },
         { id: 'loan_cut', name: '降额实验组', crowd: 320000, updated: '2026-11-02 16:05:55', desc: 'experiment_group = cut' }
       ],
-      demoBatch: '460_20261027085645', demoStart: '2026-10-27 08:56:45', demoEnd: '2026-10-27 12:18:00',
       days: [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
       odDays: [0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0],
       counts: [44120000, 11880000, 88900000], medians: [43900000, 12150000, 89100000],
@@ -68,23 +60,34 @@
       anomalies: [
         { lv: 'warn', t: '等待启动 1h13m', d: '切片 07:43 就绪，08:56 才启动' },
         { lv: 'warn', t: '分片重试 3 次', d: '均为瞬时超时，重试成功' }
-      ],
-      history: [
-        ['460_20261027085645', '10-05', '649.2 万', '已完成', '3h21m', '待推送'],
-        ['455_20261018082130', '09-26', '646.8 万', '已推送', '3h06m', '已改额'],
-        ['454_20261011090310', '09-19', '651.3 万', '已推送', '3h12m', '已改额']
       ]
     }
   };
 
   const S = {
+    view: 'list', tab: 'run', batchId: null,
     strategy: 'credit_offline', versionType: 'FORMAL', batchName: '', desc: '',
-    groups: ['wallet_active'],
-    stage: 'prepare', selDay: '2026-10-23', startedOnce: false, calOpen: false, pickerDraft: [], pickerSearch: '',
-    running: false, pct: 0, timer: null, batch: null
+    groups: ['wallet_active'], selDay: '2026-10-23', calOpen: false,
+    pickerDraft: [], pickerSearch: '', running: false, pct: 0, timer: null, lastShard: -1
   };
 
+  function cfgOf(strategy, groups) {
+    const s = STRATEGIES[strategy];
+    const gs = s.groups.filter((g) => groups.includes(g.id));
+    const crowd = gs.reduce((a, g) => a + g.crowd, 0);
+    return { strategy, versionType: 'FORMAL', groups: groups.slice(), crowd, runMin: Math.max(1, Math.round(crowd / (s.speed * 10000) * 60)), shards: Math.ceil(crowd / 4000) };
+  }
+
+  const BATCHES = [
+    { id: '459_20261028091106', name: '贷前-1028', status: 'completed', started: '2026-10-28 09:11:06', ended: '2026-10-29 04:26:20', config: cfgOf('credit_offline', ['wallet_active']), pushStep: 1, pushBatch: null, pushedAt: null },
+    { id: '460_20261027085645', name: '贷中-1027', status: 'completed', started: '2026-10-27 08:56:45', ended: '2026-10-27 12:18:00', config: cfgOf('Dai_Zhong', ['loan_in']), pushStep: 1, pushBatch: null, pushedAt: null },
+    { id: '458_20261016072310', name: '贷前-1016', status: 'completed', started: '2026-10-16 07:23:10', ended: '2026-10-17 02:15:40', config: cfgOf('credit_offline', ['wallet_active']), pushStep: 5, pushBatch: 'D20261016-01', pushedAt: '2026-10-17 09:12:00' },
+    { id: '455_20261018082130', name: '贷中-1018', status: 'completed', started: '2026-10-18 08:21:30', ended: '2026-10-18 11:27:30', config: cfgOf('Dai_Zhong', ['loan_in']), pushStep: 5, pushBatch: 'D20261018-01', pushedAt: '2026-10-18 15:40:00' },
+    { id: '457_20261005064520', name: '贷前-1005', status: 'completed', started: '2026-10-05 06:45:20', ended: '2026-10-06 02:51:20', config: cfgOf('credit_offline', ['wallet_active']), pushStep: 5, pushBatch: 'D20261005-01', pushedAt: '2026-10-06 10:20:00' }
+  ];
+
   const cur = () => STRATEGIES[S.strategy];
+  const currentBatch = () => BATCHES.find((b) => b.id === S.batchId) || null;
   const versionOf = (cfg) => { const s = STRATEGIES[cfg.strategy]; return cfg.versionType === 'FORMAL' ? s.official : s.beta; };
   const totalMin = (cfg) => cfg.runMin + 63 + STRATEGIES[cfg.strategy].waitMin;
 
@@ -99,46 +102,73 @@
     };
   }
 
-  function makeBatch(cfg) {
-    const s = STRATEGIES[cfg.strategy];
-    return { id: s.demoBatch, status: 'completed', started: s.demoStart, ended: s.demoEnd, config: cfg, pushStep: 1, pushBatch: null, pushedAt: null };
-  }
-
-  function badgeInfo() {
-    const b = S.batch;
-    if (S.running) return { t: '执行中', c: 'running' };
+  function batchState(b) {
     if (!b) return { t: '未开始', c: '' };
-    if (b.pushStep >= 5) return { t: '已生效', c: '' };
-    if (b.pushStep >= 3) return { t: '已推送 · 待改额', c: 'waiting' };
-    if (b.status === 'completed') return { t: '待推送', c: 'waiting' };
+    if (b.status === 'running') return { t: '执行中', c: 'running' };
     if (b.status === 'stopped') return { t: '已停止', c: '' };
     return { t: '已完成', c: '' };
   }
 
-  function renderHeader() {
-    const s = cur();
-    $('#sliceDate').textContent = s.sliceDate;
-    $('#sliceTime').textContent = s.sliceTime;
-    const b = badgeInfo();
-    const badge = $('#runBadge');
-    badge.textContent = b.t;
-    badge.className = 'badge ' + b.c;
+  function pushState(b) {
+    if (!b) return { t: '-', c: 'na' };
+    if (b.pushStep >= 5) return { t: '已改额', c: 'ok' };
+    if (b.pushStep >= 3) return { t: '待改额', c: 'warn' };
+    return { t: '待推送', c: 'warn' };
+  }
+
+  function renderHead() {
+    if (S.view === 'list') {
+      return '<div class="ws-top"><div class="ws-left"><div class="ws-h1">跑批作业处理</div></div>' +
+        '<div class="ws-right"><button class="btn primary" data-new>新建跑批</button></div></div>';
+    }
+    if (S.view === 'create') {
+      const s = cur();
+      return '<div class="ws-top"><div class="ws-left"><button class="back" data-back>‹ 跑批记录</button><div class="ws-h1">新建跑批</div></div>' +
+        '<div class="ws-right"><div class="slice-chip"><span>切片日</span><b>' + s.sliceDate + '</b><i>' + s.sliceTime + '</i></div></div></div>';
+    }
+    const b = currentBatch(); if (!b) return '';
+    const cfg = b.config, s = STRATEGIES[cfg.strategy];
+    const groups = s.groups.filter((g) => cfg.groups.includes(g.id)).map((g) => g.name).join('、');
+    const st = batchState(b);
+    return '<div class="ws-top"><div class="ws-left"><button class="back" data-back>‹ 跑批记录</button><div class="ws-h1">' + (b.name || b.id) + '</div><span class="badge ' + st.c + '">' + st.t + '</span></div>' +
+      '<div class="ws-right"><div class="slice-chip"><span>切片日</span><b>' + s.sliceDate + '</b><i>' + s.sliceTime + '</i></div></div></div>' +
+      '<div class="ws-meta">' + b.id + ' · ' + s.label + ' ' + versionOf(cfg) + ' · ' + groups + ' · ' + b.started + (b.ended ? ' → ' + b.ended : '') + '</div>';
   }
 
   function renderStages() {
-    const b = S.batch;
-    $('#stPrepare').textContent = '切片源健康 · 就绪';
-    $('#stRun').textContent = S.running ? pctText(S.pct) + ' · 剩余 ' + hhmm((1 - S.pct) * totalMin(b.config)) : '无运行中批次';
-    $('#stReport').textContent = b && b.status === 'completed' ? b.id.slice(0, 3) + ' 批 · 已出报告' : '待生成';
-    $('#stPush').textContent = !b ? '待跑批完成' : b.pushStep >= 5 ? '已改额 · 完成' : b.pushStep >= 3 ? '已推送 · 待改额' : '待推送 LMS';
-    $('#flagPrepare').className = 'st-flag done';
-    $('#flagRun').className = 'st-flag ' + (S.running ? 'live' : '');
-    $('#flagReport').className = 'st-flag ' + (b && b.status === 'completed' ? 'done' : '');
-    $('#flagPush').className = 'st-flag ' + (b && b.pushStep >= 5 ? 'done' : b && b.pushStep >= 3 ? 'warn' : '');
-    $$('.stage').forEach((el) => el.classList.toggle('active', el.dataset.stage === S.stage));
+    const b = currentBatch();
+    $('#stages').hidden = S.view !== 'detail';
+    if (!b) return;
+    $('#stRun').textContent = b.status === 'running' ? pctText(S.pct) + ' · 剩余 ' + hhmm((1 - S.pct) * totalMin(b.config)) : b.status === 'stopped' ? '已停止' : '已完成';
+    $('#stReport').textContent = b.status === 'completed' ? '已生成' : '待生成';
+    $('#stPush').textContent = b.pushStep >= 5 ? '已改额' : b.pushStep >= 3 ? '已推送 · 待改额' : '待推送';
+    $('#flagRun').className = 'st-flag ' + (b.status === 'running' ? 'live' : b.status === 'completed' ? 'done' : '');
+    $('#flagReport').className = 'st-flag ' + (b.status === 'completed' ? 'done' : '');
+    $('#flagPush').className = 'st-flag ' + (b.pushStep >= 5 ? 'done' : b.pushStep >= 3 ? 'warn' : '');
+    $$('.stage').forEach((el) => el.classList.toggle('active', el.dataset.tab === S.tab));
   }
 
-  /* ---------- prepare ---------- */
+  /* ---------- list ---------- */
+  function renderList() {
+    const rows = BATCHES.map((b) => {
+      const st = batchState(b), ps = pushState(b);
+      const s = STRATEGIES[b.config.strategy];
+      const dur = b.status === 'running' ? '—' : hhmm(totalMin(b.config));
+      return '<tr data-open="' + b.id + '">' +
+        '<td class="nm">' + (b.name || b.id) + '</td>' +
+        '<td class="mono">' + b.id + '</td>' +
+        '<td>' + s.label + ' ' + versionOf(b.config) + '</td>' +
+        '<td>' + s.sliceDate.slice(5) + '</td>' +
+        '<td class="r">' + wan(b.config.crowd) + '</td>' +
+        '<td><span class="tag ' + (st.c === 'running' ? 'info' : st.c === '' && st.t === '已停止' ? 'na' : 'ok') + '">' + st.t + '</span></td>' +
+        '<td class="r">' + dur + '</td>' +
+        '<td><span class="tag ' + ps.c + '">' + ps.t + '</span></td>' +
+        '</tr>';
+    }).join('');
+    $('#panelList').innerHTML = '<table class="batch-table"><thead><tr><th>批次名称</th><th>批次号</th><th>策略</th><th>切片日</th><th class="r">人数</th><th>状态</th><th class="r">耗时</th><th>推送</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  }
+
+  /* ---------- create ---------- */
   function dayStatus(s, dayISO) {
     const idx = Math.round((parseISO(dayISO) - parseISO(s.sliceDate)) / 86400000) + 13;
     if (idx < 0 || idx > 13) return null;
@@ -202,7 +232,7 @@
     '</section>';
   }
 
-  function renderPrepare() {
+  function renderCreate() {
     const s = cur();
     const day = s.sliceDate;
     const st = dayStatus(s, day);
@@ -212,23 +242,15 @@
         '<div class="legend"><span><b style="background:#5BC08D"></b>就绪</span><span><b style="background:#E7B04A"></b>偏低</span><span><b style="background:#E06B6B"></b>缺数</span></div></div>' +
         '<div class="cal">' + renderCalendar() + '</div><div class="cal-detail">' + renderCalDetail() + '</div></div>'
       : '';
-    $('#panelPrepare').innerHTML =
-      '<section class="box readiness">' +
-        '<div class="ready-row">' +
-          '<span class="ready-dot"></span><b>切片已就绪</b>' +
-          '<span class="ready-meta">切片日 ' + day + ' ' + s.sliceTime + ' · ' + ok + '/3 源就绪 · ' + (ok === 3 ? '59/59' : (56 + ok) + '/59') + ' 检查通过 · 7/7 表</span>' +
-          '<button class="btn sm ghost" data-toggle-cal> ' + (S.calOpen ? '收起日历' : '查看日历') + ' <svg viewBox="0 0 10 6" fill="none" style="width:9px;height:5px;transform:rotate(' + (S.calOpen ? 180 : 0) + 'deg)"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
-        '</div>' + cal +
-      '</section>' + renderConfigForm();
+    $('#panelCreate').innerHTML =
+      '<section class="box readiness"><div class="ready-row"><span class="ready-dot"></span><b>切片已就绪</b>' +
+        '<span class="ready-meta">切片日 ' + day + ' ' + s.sliceTime + ' · ' + ok + '/3 源就绪 · ' + (ok === 3 ? '59/59' : (56 + ok) + '/59') + ' 检查通过 · 7/7 表</span>' +
+        '<button class="btn sm ghost" data-toggle-cal> ' + (S.calOpen ? '收起日历' : '查看日历') + ' <svg viewBox="0 0 10 6" fill="none" style="width:9px;height:5px;transform:rotate(' + (S.calOpen ? 180 : 0) + 'deg)"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
+      '</div>' + cal + '</section>' + renderConfigForm();
   }
 
   /* ---------- group picker ---------- */
-  function openGroupPicker() {
-    S.pickerDraft = S.groups.slice();
-    S.pickerSearch = '';
-    renderPicker();
-  }
-
+  function openGroupPicker() { S.pickerDraft = S.groups.slice(); S.pickerSearch = ''; renderPicker(); }
   function closePicker() { $('#modalRoot').innerHTML = ''; }
 
   function renderPicker() {
@@ -249,8 +271,7 @@
     '</div>';
     const input = $('#gSearch');
     if (input) input.addEventListener('input', function (e) {
-      S.pickerSearch = e.target.value;
-      renderPicker();
+      S.pickerSearch = e.target.value; renderPicker();
       const i = $('#gSearch'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
     });
   }
@@ -263,28 +284,23 @@
   }
 
   function renderRun() {
-    const b = S.batch;
-    if (!S.running) {
-      if (!b) { $('#panelRun').innerHTML = '<div class="box idle"><div class="big">还没有跑批记录</div><div class="sub">在「准备」里配置并发起</div><button class="btn primary" data-goto="prepare">去准备</button></div>'; return; }
-      const cfg = b.config, s = STRATEGIES[cfg.strategy];
-      $('#panelRun').innerHTML = '<div class="box idle"><div class="big">当前无运行中批次</div><div class="sub">发起后在这里看整体进度、分片完成度、实时速度与异常</div><button class="btn primary" data-goto="prepare">去准备</button></div>' +
-        '<div class="box" style="margin-top:14px"><div class="box-head"><div><h3>上次执行</h3><p class="sub">' + b.id + ' · ' + s.label + ' ' + versionOf(cfg) + ' · ' + b.started + ' → ' + b.ended + '</p></div></div>' +
-        '<div class="run-stats" style="margin-top:10px"><div><i>决策人数</i><b>' + wan(cfg.crowd) + '</b></div><div><i>分片</i><b>' + fmt(cfg.shards) + '</b></div><div><i>失败分片</i><b>0</b></div><div><i>总耗时</i><b>' + hhmm(totalMin(cfg)) + '</b></div><div><i>平均速度</i><b>' + s.speed + ' 万/h</b></div><div><i>重试</i><b>' + (s.anomalies.length * 4) + ' 次</b></div></div></div>';
-      return;
-    }
+    const b = currentBatch(); if (!b) return;
     const cfg = b.config, s = STRATEGIES[cfg.strategy];
-    $('#panelRun').innerHTML = '<div class="box run-top"><div class="ring">' + ringSVG(S.pct) + '<div class="val"><b id="rPct">' + pctText(S.pct) + '</b><i>已完成</i></div></div>' +
-      '<div class="run-stats"><div><i>已处理</i><b id="rProcessed">' + fmt(Math.round(cfg.crowd * S.pct)) + '</b></div><div><i>完成分片</i><b id="rShards">' + fmt(Math.round(cfg.shards * S.pct)) + ' / ' + fmt(cfg.shards) + '</b></div><div><i>实时速度</i><b id="rSpeed">' + Math.round(s.speed * 0.97) + ' 万/h</b></div><div><i>剩余时间</i><b id="rEta">' + hhmm((1 - S.pct) * totalMin(cfg)) + '</b></div><div><i>失败分片</i><b id="rFail" style="color:#1F9D6B">0</b></div><div><i>已运行</i><b id="rElapsed">' + hhmm(S.pct * totalMin(cfg)) + '</b></div></div>' +
-      '<div class="run-side"><button class="btn danger" data-stop>停止跑批</button><span class="muted">' + b.id + '</span></div></div>' +
-      '<div class="chart-grid"><div class="box chart-box"><h3>实时速度</h3><p class="sub">近 60 分钟 · 万人/小时</p><svg id="liveChart" viewBox="0 0 520 140" height="140"></svg></div>' +
-      '<div class="box"><h3>分片进度</h3><p class="sub">每格 = 1 个分片</p><canvas class="shard-canvas" id="liveShards"></canvas><div class="pctl"><span>完成 <b id="pDone">' + fmt(Math.round(cfg.shards * S.pct)) + '</b></span><span>失败 <b>0</b></span><span>待处理 <b id="pWait">' + fmt(cfg.shards - Math.round(cfg.shards * S.pct)) + '</b></span></div></div></div>' +
-      '<div class="box anomaly" style="margin-top:14px"><div class="box-head"><div><h3>异常与重试</h3></div></div><ul><li><span class="pin"></span><div><b>暂无明显异常</b> <span>分片按 4,000 人/片稳定推进</span></div></li></ul></div>';
+    const running = b.status === 'running';
+    const pct = running ? S.pct : (b.status === 'completed' ? 1 : (b.pct || 0));
+    const total = totalMin(cfg);
+    $('#panelDetail').innerHTML = '<div class="box run-top"><div class="ring">' + ringSVG(pct) + '<div class="val"><b id="rPct">' + pctText(pct) + '</b><i>' + (running ? '已完成' : b.status === 'completed' ? '已结束' : '已停止') + '</i></div></div>' +
+      '<div class="run-stats"><div><i>已处理</i><b id="rProcessed">' + fmt(Math.round(cfg.crowd * pct)) + '</b></div><div><i>完成分片</i><b id="rShards">' + fmt(Math.round(cfg.shards * pct)) + ' / ' + fmt(cfg.shards) + '</b></div><div><i>' + (running ? '实时速度' : '平均速度') + '</i><b id="rSpeed">' + (running ? Math.round(s.speed * 0.97) : s.speed) + ' 万/h</b></div><div><i>剩余时间</i><b id="rEta">' + (running ? hhmm((1 - pct) * total) : '—') + '</b></div><div><i>失败分片</i><b id="rFail" style="color:#1F9D6B">0</b></div><div><i>' + (running ? '已运行' : '总耗时') + '</i><b id="rElapsed">' + (running ? hhmm(pct * total) : hhmm(total)) + '</b></div></div>' +
+      '<div class="run-side">' + (running ? '<button class="btn danger" data-stop>停止跑批</button>' : '') + '<span class="muted">' + b.id + '</span></div></div>' +
+      '<div class="chart-grid"><div class="box chart-box"><h3>' + (running ? '实时速度' : '跑批速度') + '</h3><p class="sub">万人/小时</p><svg id="liveChart" viewBox="0 0 520 140" height="140"></svg></div>' +
+      '<div class="box"><h3>分片进度</h3><p class="sub">每格 = 1 个分片</p><canvas class="shard-canvas" id="liveShards"></canvas><div class="pctl"><span>完成 <b id="pDone">' + fmt(Math.round(cfg.shards * pct)) + '</b></span><span>失败 <b>0</b></span><span>待处理 <b id="pWait">' + fmt(cfg.shards - Math.round(cfg.shards * pct)) + '</b></span></div></div></div>' +
+      '<div class="box anomaly" style="margin-top:14px"><div class="box-head"><div><h3>异常与重试</h3></div></div><ul><li><span class="pin"></span><div><b>' + (running ? '暂无明显异常' : '无失败分片') + '</b> <span>分片按 4,000 人/片稳定推进</span></div></li></ul></div>';
     drawLiveChart();
-    drawShards($('#liveShards'), cfg.shards, Math.round(cfg.shards * S.pct), 0, false);
+    requestAnimationFrame(function () { drawShards($('#liveShards'), cfg.shards, Math.round(cfg.shards * pct), 0, false); });
   }
 
   function updateRunLive() {
-    const b = S.batch; if (!b) return;
+    const b = currentBatch(); if (!b) return;
     const cfg = b.config, s = STRATEGIES[cfg.strategy];
     const p = S.pct, total = totalMin(cfg);
     const set = (id, v) => { const e = $('#' + id); if (e) e.textContent = v; };
@@ -297,9 +313,10 @@
     set('rElapsed', hhmm(p * total));
     set('pDone', fmt(Math.round(cfg.shards * p)));
     set('pWait', fmt(cfg.shards - Math.round(cfg.shards * p)));
-    set('stRun', pctText(p) + ' · 剩余 ' + hhmm((1 - p) * total));
+    const sub = $('#stRun'); if (sub) sub.textContent = pctText(p) + ' · 剩余 ' + hhmm((1 - p) * total);
     drawLiveChart();
-    if (Math.random() < 0.25) drawShards($('#liveShards'), cfg.shards, Math.round(cfg.shards * p), 0, false);
+    const shardKey = Math.floor(p * 100);
+    if (S.lastShard !== shardKey) { S.lastShard = shardKey; drawShards($('#liveShards'), cfg.shards, Math.round(cfg.shards * p), 0, false); }
   }
 
   /* ---------- charts ---------- */
@@ -330,9 +347,10 @@
   }
 
   function drawLiveChart() {
-    const b = S.batch; if (!b) return;
+    const b = currentBatch(); if (!b) return;
     const s = STRATEGIES[b.config.strategy];
-    const n = Math.max(4, Math.round(10 + S.pct * 14));
+    const pct = b.status === 'running' ? S.pct : 1;
+    const n = Math.max(4, Math.round(10 + pct * 14));
     drawSpeed($('#liveChart'), speedPoints(n, s.speed, 1), ['60m', '45m', '30m', '15m', '现在']);
   }
 
@@ -360,9 +378,9 @@
 
   /* ---------- report ---------- */
   function renderReport() {
-    const b = S.batch;
+    const b = currentBatch();
     if (!b || b.status !== 'completed') {
-      $('#panelReport').innerHTML = '<div class="box idle"><div class="big">报告尚未生成</div><div class="sub">跑批完成后自动生成事件报告</div><button class="btn primary" data-goto="prepare">去准备</button></div>';
+      $('#panelDetail').innerHTML = '<div class="box idle"><div class="big">报告尚未生成</div><div class="sub">跑批完成后自动生成事件报告</div></div>';
       return;
     }
     const cfg = b.config, s = STRATEGIES[cfg.strategy];
@@ -389,8 +407,8 @@
     const res = s.res.map((r) => '<div class="res-row"><span>' + r.k + '</span><span class="bar"><i style="width:' + r.p + '%"></i></span><span class="num">' + r.v + '</span></div>').join('');
     const anom = s.anomalies.map((a) => '<li class="' + (a.lv === 'bad' ? 'bad' : '') + '"><span class="pin"></span><div><b>' + a.t + '</b> <span>' + a.d + '</span></div></li>').join('');
 
-    $('#panelReport').innerHTML = '<div class="rep-head"><div><div class="t">' + (b.name || b.id) + '</div>' +
-      '<div class="s">' + b.id + ' · ' + s.label + ' ' + version + ' · ' + groupNames + ' · 切片日 ' + s.sliceDate + ' · ' + b.started + ' → ' + b.ended + '</div></div>' +
+    $('#panelDetail').innerHTML = '<div class="rep-head"><div><div class="t">事件报告</div>' +
+      '<div class="s">' + s.label + ' ' + version + ' · ' + groupNames + ' · 切片日 ' + s.sliceDate + '</div></div>' +
       '<div class="actions"><button class="btn sm" data-mock="导出报告">导出报告</button><button class="btn sm" data-mock="完整事件报告">完整事件报告</button></div></div>' +
       '<div class="kpis">' + kpis + '</div>' +
       '<div class="box tl"><div class="box-head"><div><h3>时间线</h3><p class="sub">切片搬运 → 等待启动 → 跑批执行</p></div><span class="sub">总耗时 ' + hhmm(total) + '</span></div>' +
@@ -407,7 +425,7 @@
 
   /* ---------- push ---------- */
   function pushStepInfo(i) {
-    const b = S.batch, cfg = b.config;
+    const b = currentBatch(), cfg = b.config;
     const batchNo = b.pushBatch || 'D' + b.id.slice(0, 8).replace(/_/g, '') + '-01';
     return [
       { t: '校验批次', s: b.pushStep >= 1 ? '已完成 · 明细已审批' : '待校验批次与明细', r: '' },
@@ -418,9 +436,9 @@
   }
 
   function renderPush() {
-    const b = S.batch;
+    const b = currentBatch();
     if (!b || b.status !== 'completed') {
-      $('#panelPush').innerHTML = '<div class="box idle"><div class="big">跑批完成后才能推送</div><div class="sub">报告生成后可推送 LMS 改额</div><button class="btn primary" data-goto="prepare">去准备</button></div>';
+      $('#panelDetail').innerHTML = '<div class="box idle"><div class="big">跑批完成后才能推送</div><div class="sub">报告生成后可推送 LMS 改额</div></div>';
       return;
     }
     const cfg = b.config, s = STRATEGIES[cfg.strategy];
@@ -441,7 +459,7 @@
       ['降额', '0 – 5 万', Math.round(dec * 0.71)], ['降额', '5 万以上', Math.round(dec * 0.29)]
     ].map((r) => '<tr><td><span class="tag ' + (r[0] === '提额' ? 'bad' : 'ok') + '">' + r[0] + '</span></td><td>' + r[1] + '</td><td class="r">' + fmt(r[2]) + '</td><td class="r">' + (r[2] / cfg.crowd * 100).toFixed(2) + '%</td></tr>').join('');
 
-    $('#panelPush').innerHTML = '<div class="push-grid"><div class="box"><div class="box-head"><div><h3>调额汇总</h3><p class="sub">' + b.id + ' · ' + s.label + ' ' + versionOf(cfg) + ' · ' + hhmm(totalMin(cfg)) + '</p></div></div>' +
+    $('#panelDetail').innerHTML = '<div class="push-grid"><div class="box"><div class="box-head"><div><h3>调额汇总</h3><p class="sub">' + b.id + ' · ' + s.label + ' ' + versionOf(cfg) + ' · ' + hhmm(totalMin(cfg)) + '</p></div></div>' +
       '<div class="big-split"><div class="up"><i>提额</i><b>' + wan(inc) + '</b></div><div class="down"><i>降额</i><b>' + wan(dec) + '</b></div><div><i>维持</i><b>' + wan(keep) + '</b></div></div>' +
       '<table class="list" style="margin-top:8px"><thead><tr><th>方向</th><th>区间</th><th class="r">人数</th><th class="r">占比</th></tr></thead><tbody>' + buckets + '</tbody></table></div>' +
       '<div class="box"><div class="box-head"><div><h3>推送至 LMS</h3><p class="sub">DE 批次 → LMS 批次 → 批量改额</p></div></div><div class="steps">' + steps + '</div>' +
@@ -450,20 +468,29 @@
       '<div class="box" style="margin-top:14px"><div class="box-head"><div><h3>推送记录</h3></div></div><table class="list" style="margin-top:8px"><thead><tr><th>时间</th><th>LMS 批次</th><th>操作人</th><th class="r">明细条数</th><th>状态</th></tr></thead><tbody>' + recRows + '</tbody></table></div>';
   }
 
-  /* ---------- lifecycle ---------- */
-  function renderAll() {
-    renderHeader(); renderStages();
-    if (S.stage === 'prepare') renderPrepare();
-    if (S.stage === 'run') renderRun();
-    if (S.stage === 'report') renderReport();
-    if (S.stage === 'push') renderPush();
+  /* ---------- shell ---------- */
+  function renderApp() {
+    $('#wsHead').innerHTML = '<div class="ws-head">' + renderHead() + '</div>';
+    $('#stages').hidden = S.view !== 'detail';
+    $$('.panel').forEach((el) => { el.classList.remove('active'); });
+    if (S.view === 'list') { renderList(); $('#panelList').classList.add('active'); }
+    else if (S.view === 'create') { renderCreate(); $('#panelCreate').classList.add('active'); }
+    else {
+      $('#panelDetail').classList.add('active');
+      renderStages();
+      if (S.tab === 'run') renderRun();
+      if (S.tab === 'report') renderReport();
+      if (S.tab === 'push') renderPush();
+    }
   }
 
-  function setStage(stage) {
-    S.stage = stage;
-    $$('.stage').forEach((el) => el.classList.toggle('active', el.dataset.stage === stage));
-    $$('.panel').forEach((el) => el.classList.toggle('active', el.dataset.panel === stage));
-    renderAll();
+  function setView(view) { S.view = view; renderApp(); }
+  function openBatch(id) {
+    const b = BATCHES.find((x) => x.id === id); if (!b) return;
+    S.batchId = id;
+    S.tab = b.status === 'completed' ? 'report' : 'run';
+    S.view = 'detail';
+    renderApp();
   }
 
   function toast(msg) {
@@ -482,77 +509,82 @@
     if (!S.batchName.trim()) { toast('请填写批次名称'); const el = $('#batchName'); if (el) el.focus(); return; }
     const cfg = snap();
     if (cfg.crowd <= 0) { toast('至少选择一个客户分组'); return; }
-    S.running = true; S.pct = 0;
-    S.startedOnce = true;
-    S.batch = { id: nextBatchId(), name: S.batchName.trim(), desc: S.desc.trim(), status: 'running', started: nowText(), ended: '', config: cfg, pushStep: 0, pushBatch: null, pushedAt: null };
-    setStage('run');
+    const b = { id: nextBatchId(), name: S.batchName.trim(), desc: S.desc.trim(), status: 'running', started: nowText(), ended: '', config: cfg, pushStep: 0, pushBatch: null, pushedAt: null, pct: 0 };
+    BATCHES.unshift(b);
+    S.batchId = b.id; S.view = 'detail'; S.tab = 'run'; S.running = true; S.pct = 0; S.lastShard = -1;
+    renderApp();
     if (S.timer) clearInterval(S.timer);
     S.timer = setInterval(function () {
       S.pct = Math.min(1, S.pct + 0.012 + Math.random() * 0.008);
       updateRunLive();
       if (S.pct >= 1) finishRun();
     }, 220);
-    toast('跑批已发起：' + S.batch.id);
+    toast('跑批已发起：' + b.name);
   }
 
   function stopRun() {
-    if (!S.running) return;
+    const b = currentBatch();
+    if (!b || b.status !== 'running') return;
     S.running = false; clearInterval(S.timer); S.timer = null;
-    S.batch.status = 'stopped'; setStage('prepare'); toast('已停止跑批（概念演示）');
+    b.status = 'stopped'; b.pct = S.pct;
+    renderApp(); toast('已停止跑批（概念演示）');
   }
 
   function finishRun() {
+    const b = currentBatch();
     S.running = false; clearInterval(S.timer); S.timer = null; S.pct = 1;
-    S.batch.status = 'completed';
-    const total = totalMin(S.batch.config);
+    if (!b) return;
+    b.status = 'completed'; b.pct = 1;
+    const total = totalMin(b.config);
     const end = new Date(), start = new Date(end.getTime() - total * 60000);
-    S.batch.started = fmtDT(start); S.batch.ended = fmtDT(end);
-    const st = STRATEGIES[S.batch.config.strategy];
-    st.history.unshift([S.batch.id, st.sliceDate.slice(5), wan(S.batch.config.crowd), '已完成', hhmm(total), '待推送']);
-    setStage('report'); toast('跑批完成，事件报告已生成');
+    b.started = fmtDT(start); b.ended = fmtDT(end);
+    S.tab = 'report';
+    renderApp(); toast('跑批完成，事件报告已生成');
   }
 
   function startPush() {
-    const b = S.batch;
+    const b = currentBatch();
     if (!b || b.status !== 'completed' || b.pushStep >= 3) return;
-    b.pushStep = 1; renderAll();
-    setTimeout(function () { b.pushStep = 2; renderAll(); }, 700);
-    setTimeout(function () { b.pushStep = 3; b.pushedAt = nowText(); b.pushBatch = 'D' + b.id.slice(0, 8).replace(/_/g, '-') + '-01'; const st = STRATEGIES[b.config.strategy]; const row = st.history.find((x) => x[0] === b.id); if (row) row[5] = '已推送'; renderAll(); toast('已推送 LMS 批次 ' + b.pushBatch); }, 1500);
-    setTimeout(function () { b.pushStep = 4; renderAll(); }, 2300);
+    b.pushStep = 1; renderApp();
+    setTimeout(function () { b.pushStep = 2; renderApp(); }, 700);
+    setTimeout(function () { b.pushStep = 3; b.pushedAt = nowText(); b.pushBatch = 'D' + b.id.slice(0, 8).replace(/_/g, '-') + '-01'; renderApp(); toast('已推送 LMS 批次 ' + b.pushBatch); }, 1500);
+    setTimeout(function () { b.pushStep = 4; renderApp(); }, 2300);
   }
 
   function completePush() {
-    const b = S.batch;
+    const b = currentBatch();
     if (!b || b.pushStep < 3) return;
-    b.pushStep = 5; const st = STRATEGIES[b.config.strategy]; const row = st.history.find((x) => x[0] === b.id); if (row) row[5] = '已改额'; renderAll(); toast('LMS 改额完成：' + wan(b.config.crowd) + ' 条已生效');
+    b.pushStep = 5; renderApp(); toast('LMS 改额完成：' + wan(b.config.crowd) + ' 条已生效');
   }
 
   /* ---------- events ---------- */
   function bind() {
-    $('#stages').addEventListener('click', function (e) {
-      const el = e.target.closest('.stage'); if (el) setStage(el.dataset.stage);
-    });
     document.addEventListener('click', function (e) {
+      if (e.target.closest('[data-new]')) { S.batchName = ''; S.desc = ''; S.view = 'create'; renderApp(); return; }
+      if (e.target.closest('[data-back]')) { S.view = 'list'; renderApp(); return; }
+      const row = e.target.closest('[data-open]');
+      if (row) { openBatch(row.dataset.open); return; }
+      const tab = e.target.closest('[data-tab]');
+      if (tab) { S.tab = tab.dataset.tab; renderApp(); return; }
       const launch = e.target.closest('[data-launch]'); if (launch && !launch.disabled) { startRun(); return; }
       const stop = e.target.closest('[data-stop]'); if (stop) { stopRun(); return; }
-      const go = e.target.closest('[data-goto]'); if (go) { setStage(go.dataset.goto); return; }
       const push = e.target.closest('[data-push]'); if (push && !push.disabled) { startPush(); return; }
       const comp = e.target.closest('[data-complete]'); if (comp) { completePush(); return; }
       const mock = e.target.closest('[data-mock]'); if (mock) { toast('概念版演示：' + mock.dataset.mock + ' 暂未接入'); return; }
-      const day = e.target.closest('.cal-col'); if (day) { S.selDay = day.dataset.day; renderPrepare(); return; }
+      const day = e.target.closest('.cal-col'); if (day) { S.selDay = day.dataset.day; renderCreate(); return; }
       const rm = e.target.closest('[data-remove-group]');
-      if (rm) { const id = rm.dataset.removeGroup; if (S.groups.length === 1) { toast('至少保留一个客户分组'); return; } S.groups = S.groups.filter((x) => x !== id); renderAll(); return; }
-      if (e.target.closest('[data-toggle-cal]')) { S.calOpen = !S.calOpen; renderPrepare(); return; }
+      if (rm) { const id = rm.dataset.removeGroup; if (S.groups.length === 1) { toast('至少保留一个客户分组'); return; } S.groups = S.groups.filter((x) => x !== id); renderApp(); return; }
+      if (e.target.closest('[data-toggle-cal]')) { S.calOpen = !S.calOpen; renderCreate(); return; }
       if (e.target.closest('[data-open-groups]')) { openGroupPicker(); return; }
       if (e.target.closest('[data-close-picker]')) { closePicker(); return; }
       const pick = e.target.closest('[data-pick]');
       if (pick) { const id = pick.dataset.pick; if (S.pickerDraft.includes(id)) S.pickerDraft = S.pickerDraft.filter((x) => x !== id); else S.pickerDraft.push(id); renderPicker(); return; }
       if (e.target.closest('[data-picker-reset]')) { S.pickerDraft = []; renderPicker(); return; }
       const ok = e.target.closest('[data-picker-ok]');
-      if (ok && !ok.disabled) { S.groups = S.pickerDraft.slice(); closePicker(); renderAll(); return; }
+      if (ok && !ok.disabled) { S.groups = S.pickerDraft.slice(); closePicker(); renderApp(); return; }
       const st = e.target.closest('[data-strategy]');
-      if (st) { S.strategy = st.dataset.strategy; S.versionType = 'FORMAL'; S.groups = [STRATEGIES[S.strategy].groups[0].id]; S.selDay = STRATEGIES[S.strategy].sliceDate; renderAll(); return; }
-      const ver = e.target.closest('[data-version]'); if (ver) { S.versionType = ver.dataset.version; renderAll(); return; }
+      if (st) { S.strategy = st.dataset.strategy; S.versionType = 'FORMAL'; S.groups = [STRATEGIES[S.strategy].groups[0].id]; S.selDay = STRATEGIES[S.strategy].sliceDate; renderApp(); return; }
+      const ver = e.target.closest('[data-version]'); if (ver) { S.versionType = ver.dataset.version; renderApp(); return; }
     });
     document.addEventListener('input', function (e) {
       if (e.target.id === 'batchName') S.batchName = e.target.value;
@@ -573,11 +605,7 @@
     tick(); setInterval(tick, 1000);
   }
 
-  function init() {
-    S.selDay = cur().sliceDate;
-    S.batch = makeBatch(snap());
-    bind(); renderAll(); clock();
-  }
+  function init() { bind(); renderApp(); clock(); }
 
   init();
 })();
