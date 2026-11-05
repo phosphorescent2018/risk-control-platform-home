@@ -117,7 +117,6 @@
 
   function renderHeader() {
     const s = cur();
-    $('#batchLabel').textContent = S.startedOnce && S.batch ? (S.batch.name || S.batch.id) : '新建跑批';
     $('#sliceDate').textContent = s.sliceDate;
     $('#sliceTime').textContent = s.sliceTime;
     const b = badgeInfo();
