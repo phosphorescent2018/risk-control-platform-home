@@ -123,9 +123,6 @@
     const badge = $('#runBadge');
     badge.textContent = b.t;
     badge.className = 'badge ' + b.c;
-    const btn = $('#launchBtn');
-    if (S.running) { btn.textContent = '停止跑批'; btn.className = 'btn danger'; btn.disabled = false; }
-    else { btn.textContent = '发起跑批'; btn.className = 'btn primary'; btn.disabled = false; }
   }
 
   function renderStages() {
@@ -201,6 +198,7 @@
           '<div class="group-summary"><span>已选 <b>' + cfg.groups.length + '</b> 个 · 合计 <b>' + wan(cfg.crowd) + '</b></span><button class="btn sm" data-open-groups>选择分组</button></div>' +
           '<div class="group-chips">' + chips + '</div>', 'span2') +
       '</div>' +
+      '<div class="form-foot"><button class="btn primary" data-launch>发起跑批</button></div>' +
     '</section>';
   }
 
@@ -277,7 +275,7 @@
     const cfg = b.config, s = STRATEGIES[cfg.strategy];
     $('#panelRun').innerHTML = '<div class="box run-top"><div class="ring">' + ringSVG(S.pct) + '<div class="val"><b id="rPct">' + pctText(S.pct) + '</b><i>已完成</i></div></div>' +
       '<div class="run-stats"><div><i>已处理</i><b id="rProcessed">' + fmt(Math.round(cfg.crowd * S.pct)) + '</b></div><div><i>完成分片</i><b id="rShards">' + fmt(Math.round(cfg.shards * S.pct)) + ' / ' + fmt(cfg.shards) + '</b></div><div><i>实时速度</i><b id="rSpeed">' + Math.round(s.speed * 0.97) + ' 万/h</b></div><div><i>剩余时间</i><b id="rEta">' + hhmm((1 - S.pct) * totalMin(cfg)) + '</b></div><div><i>失败分片</i><b id="rFail" style="color:#1F9D6B">0</b></div><div><i>已运行</i><b id="rElapsed">' + hhmm(S.pct * totalMin(cfg)) + '</b></div></div>' +
-      '<div class="run-side"><span class="muted">' + b.id + '</span></div></div>' +
+      '<div class="run-side"><button class="btn danger" data-stop>停止跑批</button><span class="muted">' + b.id + '</span></div></div>' +
       '<div class="chart-grid"><div class="box chart-box"><h3>实时速度</h3><p class="sub">近 60 分钟 · 万人/小时</p><svg id="liveChart" viewBox="0 0 520 140" height="140"></svg></div>' +
       '<div class="box"><h3>分片进度</h3><p class="sub">每格 = 1 个分片</p><canvas class="shard-canvas" id="liveShards"></canvas><div class="pctl"><span>完成 <b id="pDone">' + fmt(Math.round(cfg.shards * S.pct)) + '</b></span><span>失败 <b>0</b></span><span>待处理 <b id="pWait">' + fmt(cfg.shards - Math.round(cfg.shards * S.pct)) + '</b></span></div></div></div>' +
       '<div class="box anomaly" style="margin-top:14px"><div class="box-head"><div><h3>异常与重试</h3></div></div><ul><li><span class="pin"></span><div><b>暂无明显异常</b> <span>分片按 4,000 人/片稳定推进</span></div></li></ul></div>';
@@ -534,7 +532,6 @@
     $('#stages').addEventListener('click', function (e) {
       const el = e.target.closest('.stage'); if (el) setStage(el.dataset.stage);
     });
-    $('#launchBtn').addEventListener('click', function () { S.running ? stopRun() : startRun(); });
     document.addEventListener('click', function (e) {
       const launch = e.target.closest('[data-launch]'); if (launch && !launch.disabled) { startRun(); return; }
       const stop = e.target.closest('[data-stop]'); if (stop) { stopRun(); return; }

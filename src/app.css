@@ -181,6 +181,7 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
 .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 20px; }
 .form-grid .field { margin-top:10px; }
 .form-grid .span2 { grid-column:span 2; }
+.form-foot { display:flex; justify-content:flex-end; margin-top:16px; padding-top:12px; border-top:1px solid var(--line); }
 
 /* config form */
 .form-box .box-head { margin-bottom:2px; }
