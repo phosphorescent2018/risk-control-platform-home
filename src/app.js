@@ -25,7 +25,7 @@
 
   const STRATEGIES = {
     credit_offline: {
-      key: 'credit_offline', label: 'credit_offline', scene: '贷前', official: 'v20', beta: 'v19-beta',
+      key: 'credit_offline', label: 'credit_offline', scene: '贷前', official: 'v20', beta: null,
       product: 'MTN_UG_APP', speed: 217, waitMin: 22,
       sliceDate: '2026-10-23', sliceTime: '22:13',
       groups: [
@@ -50,7 +50,7 @@
       ]
     },
     Dai_Zhong: {
-      key: 'Dai_Zhong', label: 'Dai_Zhong', scene: '贷中', official: 'v46', beta: 'v45-beta',
+      key: 'Dai_Zhong', label: 'Dai_Zhong', scene: '贷中', official: 'v47', beta: null,
       product: 'MTN_UG_APP', speed: 604, waitMin: 73,
       sliceDate: '2026-10-05', sliceTime: '22:13',
       groups: [
@@ -187,10 +187,11 @@
       '<div class="box-head"><div><h3>跑批配置</h3><p class="sub">选择本次跑批使用的策略与范围</p></div></div>' +
       '<div class="field"><label>业务线</label><div class="static">MTN_Uganda</div></div>' +
       '<div class="field"><label>策略</label><div class="opts">' + opts + '</div></div>' +
-      '<div class="field"><label>版本类型</label><div class="ver-row"><div class="seg">' +
-        '<button data-version="FORMAL" class="' + (S.versionType === 'FORMAL' ? 'on' : '') + '">Official</button>' +
-        '<button data-version="BETA" class="' + (S.versionType === 'BETA' ? 'on' : '') + '">Test</button>' +
-      '</div><span class="ver">' + version + '</span></div></div>' +
+      '<div class="field"><label>版本</label><div class="ver-row">' +
+        (s.beta
+          ? '<div class="seg"><button data-version="FORMAL" class="' + (S.versionType === 'FORMAL' ? 'on' : '') + '">Official</button><button data-version="BETA" class="' + (S.versionType === 'BETA' ? 'on' : '') + '">Test</button></div><span class="ver">' + version + '</span>'
+          : '<span class="ver-pill">Official · ' + s.official + '</span>') +
+      '</div></div>' +
       '<div class="field"><label>产品</label><div class="static">' + s.product + '</div></div>' +
       '<div class="field"><label>客户分组</label><div class="groups">' + groups + '</div></div>' +
       '<div class="field"><label>发布目标</label><div class="groups">' +

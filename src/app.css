@@ -182,6 +182,7 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
 .seg button { border:0; background:#fff; padding:5px 10px; font:inherit; font-size:11px; color:var(--ink); cursor:pointer; }
 .seg button.on { background:#F0F6FF; color:var(--blue-deep); font-weight:600; }
 .ver { margin-left:8px; font-size:11px; color:var(--muted); }
+.ver-pill { display:inline-flex; align-items:center; height:26px; padding:0 10px; border:1px solid var(--line); border-radius:7px; font-size:11px; color:var(--ink); background:#FAFBFE; }
 .groups { display:flex; flex-direction:column; gap:5px; }
 .chk { display:flex; align-items:center; gap:7px; border:1px solid var(--line); border-radius:7px; padding:6px 8px; background:#fff; font:inherit; font-size:11px; color:var(--ink); cursor:pointer; text-align:left; }
 .chk:hover { border-color:#C9D4EA; }
