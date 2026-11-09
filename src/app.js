@@ -67,7 +67,7 @@
   const S = {
     view: 'list', tab: 'run', batchId: null,
     strategy: 'credit_offline', business: 'MTN_Uganda', version: 'v20', versionType: 'FORMAL', batchName: '', desc: '',
-    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, reportView: 'list', reports: [], confirmOpen: false, groupOpen: false, groupUp: false, pushArm: false, mcat: 'inc',
+    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, reportView: 'list', reports: [], webhook: '', notifyEvents: [], confirmOpen: false, groupOpen: false, groupUp: false, pushArm: false, mcat: 'inc',
     pickerDraft: [], pickerSearch: '', running: false, pct: 0, timer: null, lastShard: -1
   };
 
@@ -76,7 +76,7 @@
     const gs = s.groups.filter((g) => groups.includes(g.id));
     const crowd = gs.reduce((a, g) => a + g.crowd, 0);
     return {
-      strategy, version: s.official, versionType: 'FORMAL', reports: strategy === 'credit_offline' ? ['PRE_LOAN_OPERATION_REPORT', 'IN_LOAN_MODEL_STABILITY_REPORT'] : ['IN_LOAN_LIMIT_MIGRATION_REPORT', 'IN_LOAN_MODEL_STABILITY_REPORT', 'IN_LOAN_FULL_POPULATION_LIMIT_REPORT', 'IN_LOAN_FULL_POPULATION_FINAL_LIMIT_REPORT'], sliceDate: day || s.sliceDate, sliceTime: s.sliceTime,
+      strategy, version: s.official, versionType: 'FORMAL', reports: strategy === 'credit_offline' ? ['PRE_LOAN_OPERATION_REPORT', 'IN_LOAN_MODEL_STABILITY_REPORT'] : ['IN_LOAN_LIMIT_MIGRATION_REPORT', 'IN_LOAN_MODEL_STABILITY_REPORT', 'IN_LOAN_FULL_POPULATION_LIMIT_REPORT', 'IN_LOAN_FULL_POPULATION_FINAL_LIMIT_REPORT'], webhook: '', notifyEvents: [], sliceDate: day || s.sliceDate, sliceTime: s.sliceTime,
       groups: groups.slice(), crowd, runMin: Math.max(1, Math.round(crowd / (s.speed * 10000) * 60)), shards: Math.ceil(crowd / 4000)
     };
   }
@@ -107,7 +107,7 @@
     const groups = s.groups.filter((g) => S.groups.includes(g.id));
     const crowd = groups.reduce((a, g) => a + g.crowd, 0);
     return {
-      strategy: S.strategy, business: S.business, version: S.version, reports: S.reports.slice(), versionType: S.versionType, groups: groups.map((g) => g.id), sliceDate: s.sliceDate, sliceTime: s.sliceTime,
+      strategy: S.strategy, business: S.business, version: S.version, reports: S.reports.slice(), webhook: S.webhook, notifyEvents: S.notifyEvents.slice(), versionType: S.versionType, groups: groups.map((g) => g.id), sliceDate: s.sliceDate, sliceTime: s.sliceTime,
       crowd, runMin: crowd ? Math.max(1, Math.round(crowd / (s.speed * 10000) * 60)) : 0,
       shards: Math.ceil(crowd / 4000)
     };
@@ -286,6 +286,23 @@
     '</section>';
   }
 
+  const NOTIFY_EVENTS = [
+    { k: 'BATCH_DONE', n: '跑批完成' },
+    { k: 'BATCH_RETRY', n: '跑批分片整体重试' },
+    { k: 'BATCH_FAILED', n: '跑批失败' },
+    { k: 'REPORT_DONE', n: '报告生成完成' },
+    { k: 'REPORT_FAILED', n: '报告生成失败' },
+    { k: 'LMS_DONE', n: 'LMS 调额执行完成' }
+  ];
+
+  function renderNotifyCard() {
+    const items = NOTIFY_EVENTS.map((e) => '<button class="rpt-check' + (S.notifyEvents.indexOf(e.k) >= 0 ? ' on' : '') + '" data-nevent="' + e.k + '"><span class="cbx"></span><span class="nm">' + e.n + '</span></button>').join('');
+    return '<section class="box notify-box"><div class="box-head"><div><h3>通知推送<span class="opt-tag">非必填</span></h3><p class="sub">在关键节点向你的 webhook 发送一条消息</p></div></div>' +
+      '<div class="field"><label>Webhook 地址</label><input class="input" id="webhook" placeholder="https://example.com/webhook/risk-batch" value="' + (S.webhook || '').replace(/"/g, '&quot;') + '"></div>' +
+      '<div class="field"><label>推送场景<span class="lbl-note">' + (S.webhook ? '已填地址，勾选后生效' : '填写 Webhook 后勾选生效') + '</span></label><div class="notify-grid">' + items + '</div></div>' +
+      '</section>';
+  }
+
   function renderReadiness() {
     const s = cur();
     const day = s.sliceDate;
@@ -303,7 +320,8 @@
   }
 
   function renderCreate() {
-    $('#panelCreate').innerHTML = renderReadiness() + '<div style="margin-top:14px">' + renderConfigForm() + '</div>';
+    $('#panelCreate').innerHTML = renderReadiness() + '<div style="margin-top:14px">' + renderConfigForm() + '</div>' +
+      '<div style="margin-top:14px">' + renderNotifyCard() + '</div>';
   }
 
   /* ---------- group picker ---------- */
@@ -633,6 +651,7 @@
         row('客户分组', names + '（' + groups.length + ' 个）') +
         row('预计规模', wan(cfg.crowd) + ' 人') +
         row('报告', S.reports.length ? S.reports.map((c) => (REPORT_DEFS.find((d) => d.code === c) || {}).name).join('、') : '不生成') +
+        row('通知推送', S.webhook ? S.webhook + ' · ' + S.notifyEvents.length + ' 个场景' : '未配置') +
       '</div>' +
       '<div class="cf-note">发起后可在执行页随时停止；已写入的分片数据不会回滚。</div>' +
       '<div class="cf-foot"><button class="btn" data-confirm-cancel>取消</button><button class="btn primary" data-confirm-go>确认发起</button></div>' +
@@ -737,6 +756,8 @@
       if (e.target.closest('[data-confirm-go]')) { S.confirmOpen = false; startRun(); return; }
       if (e.target.closest('[data-confirm-mask]') && !e.target.closest('.confirm')) { S.confirmOpen = false; renderApp(); return; }
       const stop = e.target.closest('[data-stop]'); if (stop) { stopRun(); return; }
+      const ne = e.target.closest('[data-nevent]');
+      if (ne) { const k = ne.dataset.nevent; if (S.notifyEvents.indexOf(k) >= 0) S.notifyEvents = S.notifyEvents.filter((x) => x !== k); else S.notifyEvents.push(k); renderApp(); return; }
       const rc = e.target.closest('[data-rpt]');
       if (rc) { const c = rc.dataset.rpt; if (S.reports.indexOf(c) >= 0) S.reports = S.reports.filter((x) => x !== c); else S.reports.push(c); renderApp(); return; }
       const gt = e.target.closest('[data-gtoggle]');
@@ -804,6 +825,7 @@
       if (e.target.id === 'bizSel') { S.business = e.target.value; renderApp(); }
       if (e.target.id === 'verSel') { S.version = e.target.value; renderApp(); }
       if (e.target.id === 'batchName') S.batchName = e.target.value;
+      if (e.target.id === 'webhook') S.webhook = e.target.value;
       if (e.target.id === 'batchDesc') S.desc = e.target.value;
       if (e.target.id === 'gSearch') { S.gsearch = e.target.value; renderApp(); const i = $('#gSearch'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
     });
