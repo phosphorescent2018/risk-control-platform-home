@@ -668,6 +668,17 @@ button.gitem { cursor:pointer; text-align:left; }
 .cmp { margin-left:6px; }
 .cmp-in { width:250px; height:26px; font-size:10.5px; }
 
+.mtx3 td.mcell { display:flex; align-items:center; gap:6px; padding:4px 8px; }
+.mtx-ck { width:15px; height:15px; flex:0 0 15px; border:1px solid #C9D2E2; border-radius:4px; background:#fff; padding:0; cursor:pointer; position:relative; }
+.mtx-ck.on { background:var(--blue); border-color:var(--blue); }
+.mtx-ck .mk { position:absolute; left:50%; top:50%; transform:translate(-50%,-54%); font-size:9px; color:#fff; line-height:1; }
+.mtx-num { width:84px; border:none; background:transparent; text-align:right; font:inherit; font-size:11px; color:var(--ink); padding:2px 3px; border-radius:4px; font-variant-numeric:tabular-nums; }
+.mtx-num:hover { background:#F3F7FF; }
+.mtx-num:focus { outline:none; background:#fff; box-shadow:0 0 0 2px rgba(80,149,255,.18); border-radius:4px; }
+
+.mtx3 td.mcell { display:table-cell; padding:3px 8px; }
+.mcell-in { display:flex; align-items:center; gap:6px; justify-content:flex-end; }
+
 </style>
 </head>
 <body>
@@ -1318,36 +1329,36 @@ button.gitem { cursor:pointer; text-align:left; }
       g[4][4] += diff;
       return g;
     };
-    if (!b.s3) b.s3 = {};
+    if (!b.alloc3) b.alloc3 = {};
     ['inc', 'dec', 'keep'].forEach(function (c) {
-      if (!b.s3[c]) b.s3[c] = TIERS3.map(function () { return ODS.map(function () { return true; }); });
+      if (!b.alloc3[c]) b.alloc3[c] = gridOf(c).map(function (r) { return r.slice(); });
     });
     const cat = S.mcat;
     const grid = gridOf(cat);
     const rows3 = TIERS3.map(function (t, i) {
       const cells = ODS.map(function (o, j) {
-        const on = b.s3[cat][i][j];
-        return '<td class="mcell pick' + (on ? '' : ' off') + '" data-msel="' + i + '-' + j + '"><span class="mk">' + (on ? '✓' : '') + '</span><b>' + fmt(grid[i][j]) + '</b></td>';
+        const max = grid[i][j];
+        const val = Math.min(b.alloc3[cat][i][j], max);
+        return '<td class="mcell"><div class="mcell-in"><button class="mtx-ck' + (val > 0 ? ' on' : '') + '" data-mck="' + i + '-' + j + '"><span class="mk">' + (val > 0 ? '✓' : '') + '</span></button>' +
+          '<input class="mtx-num" type="number" min="0" max="' + max + '" value="' + val + '" data-mnum="' + i + '-' + j + '" title="最多 ' + fmt(max) + ' 人"></div></td>';
       }).join('');
-      const sum = grid[i].reduce(function (a, n) { return a + n; }, 0);
+      const sum = ODS.reduce(function (a, o, j) { return a + Math.min(b.alloc3[cat][i][j], grid[i][j]); }, 0);
       return '<tr><td class="tl">' + t.n + '</td>' + cells + '<td class="r sum">' + fmt(sum) + '</td></tr>';
     }).join('');
-    const colSum = ODS.map(function (o, j) { return grid.reduce(function (a, r) { return a + r[j]; }, 0); });
-    const selOf = function (c) {
+    const colSum = ODS.map(function (o, j) { return TIERS3.reduce(function (a, t, i) { return a + Math.min(b.alloc3[cat][i][j], grid[i][j]); }, 0); });
+    const catSel = TIERS3.reduce(function (a, t, i) { return a + ODS.reduce(function (a2, o, j) { return a2 + Math.min(b.alloc3[cat][i][j], grid[i][j]); }, 0); }, 0);
+    const totOf = function (c) {
       const g = gridOf(c);
-      return TIERS3.reduce(function (a, t, i) {
-        return a + ODS.reduce(function (a2, o, j) { return a2 + (b.s3[c][i][j] ? g[i][j] : 0); }, 0);
-      }, 0);
+      return TIERS3.reduce(function (a, t, i) { return a + ODS.reduce(function (a2, o, j) { return a2 + Math.min(b.alloc3[c][i][j], g[i][j]); }, 0); }, 0);
     };
-    const selInc = selOf('inc'), selDec = selOf('dec'), selKeep = selOf('keep');
-    const catSel = cat === 'inc' ? selInc : cat === 'dec' ? selDec : selKeep;
+    const selInc = totOf('inc'), selDec = totOf('dec'), selKeep = totOf('keep');
     const incAmt = selInc * 4500, decAmt = selDec * 2800, netAmt = incAmt - decAmt;
     const yi = function (v) { return (v / 1e8).toFixed(2) + ' 亿'; };
-    const matrix = '<div class="box matrix"><div class="box-head"><div><h3>结果加工 · 额度矩阵</h3><p class="sub">调额方向 × opportunity_od × history_tier，点格勾选本次要调的人</p></div>' +
+    const matrix = '<div class="box matrix"><div class="box-head"><div><h3>结果加工 · 额度矩阵</h3><p class="sub">调额方向 × opportunity_od × history_tier；勾选=全量，数字可直接改成更少的人</p></div>' +
       '<div class="seg small"><button data-mcat="inc" class="' + (cat === 'inc' ? 'on' : '') + '">提额</button><button data-mcat="dec" class="' + (cat === 'dec' ? 'on' : '') + '">降额</button><button data-mcat="keep" class="' + (cat === 'keep' ? 'on' : '') + '">不变</button></div></div>' +
       '<div class="mtx-tools"><span>已选 <b>' + fmt(catSel) + '</b> / 共 <b>' + fmt(CAT[cat]) + '</b> 人</span><span class="sp"></span><button class="lnk" data-mall>全选</button><button class="lnk" data-mnone>清空</button></div>' +
       '<table class="mtx mtx3"><thead><tr><th>history_tier</th>' + ODS.map(function (o) { return '<th>' + o + '</th>'; }).join('') + '<th class="r">小计</th></tr></thead><tbody>' + rows3 +
-      '<tr class="mtx-sum"><td class="tl">合计</td>' + colSum.map(function (n) { return '<td>' + fmt(n) + '</td>'; }).join('') + '<td class="r">' + fmt(CAT[cat]) + '</td></tr></tbody></table>' +
+      '<tr class="mtx-sum"><td class="tl">合计</td>' + colSum.map(function (n) { return '<td>' + fmt(n) + '</td>'; }).join('') + '<td class="r">' + fmt(catSel) + '</td></tr></tbody></table>' +
       '<div class="mtx-foot"><span>本次调整 <b>' + fmt(selInc) + '</b> 提额 · <b>' + fmt(selDec) + '</b> 降额 · <b>' + fmt(selKeep) + '</b> 不变</span>' +
       '<span class="mtx-total">本次预计调额额度 <b>' + (netAmt >= 0 ? '+' : '−') + yi(Math.abs(netAmt)) + '</b><i>提额 +' + yi(incAmt) + ' · 降额 −' + yi(decAmt) + '</i></span></div></div>';
 
@@ -1486,14 +1497,14 @@ button.gitem { cursor:pointer; text-align:left; }
   /* ---------- events ---------- */
   function bind() {
     document.addEventListener('change', function (e) {
-      if (!e.target.classList || !e.target.classList.contains('mtx-in')) return;
-      const b = currentBatch(); if (!b || !b.alloc) return;
-      const parts = e.target.dataset.mcell.split('-');
+      if (!e.target.classList || !e.target.classList.contains('mtx-num')) return;
+      const b = currentBatch(); if (!b || !b.alloc3) return;
+      const parts = e.target.dataset.mnum.split('-');
       const i = +parts[0], j = +parts[1];
       const max = +e.target.max || 0;
       let v = Math.round(+e.target.value || 0);
       v = Math.max(0, Math.min(max, v));
-      b.alloc[S.mcat][i][j] = v;
+      b.alloc3[S.mcat][i][j] = v;
       renderApp();
     });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { if (S.confirmOpen) { S.confirmOpen = false; renderApp(); } else if (S.groupOpen) { S.groupOpen = false; renderApp(); } } });
@@ -1519,10 +1530,23 @@ button.gitem { cursor:pointer; text-align:left; }
       if (e.target.closest('[data-confirm-go]')) { S.confirmOpen = false; startRun(); return; }
       if (e.target.closest('[data-confirm-mask]') && !e.target.closest('.confirm')) { S.confirmOpen = false; renderApp(); return; }
       const stop = e.target.closest('[data-stop]'); if (stop) { stopRun(); return; }
-      const msel = e.target.closest('[data-msel]');
-      if (msel) { const bb = currentBatch(); const p2 = msel.dataset.msel.split('-'); const i = +p2[0], j = +p2[1]; bb.s3[S.mcat][i][j] = !bb.s3[S.mcat][i][j]; renderApp(); return; }
-      if (e.target.closest('[data-mall]')) { const bb = currentBatch(); bb.s3[S.mcat] = bb.s3[S.mcat].map(function (r) { return r.map(function () { return true; }); }); renderApp(); return; }
-      if (e.target.closest('[data-mnone]')) { const bb = currentBatch(); bb.s3[S.mcat] = bb.s3[S.mcat].map(function (r) { return r.map(function () { return false; }); }); renderApp(); return; }
+      const mck = e.target.closest('[data-mck]');
+      if (mck) {
+        const bb = currentBatch(); const p2 = mck.dataset.mck.split('-'); const i = +p2[0], j = +p2[1];
+        const mx = document.querySelector('[data-mnum="' + i + '-' + j + '"]').max;
+        bb.alloc3[S.mcat][i][j] = bb.alloc3[S.mcat][i][j] > 0 ? 0 : +mx;
+        renderApp(); return;
+      }
+      if (e.target.closest('[data-mall]')) {
+        const bb = currentBatch();
+        document.querySelectorAll('[data-mnum]').forEach(function (inp) {
+          const p3 = inp.dataset.mnum.split('-'); bb.alloc3[S.mcat][+p3[0]][+p3[1]] = +inp.max;
+        });
+        renderApp(); return;
+      }
+      if (e.target.closest('[data-mnone]')) {
+        const bb = currentBatch(); bb.alloc3[S.mcat] = bb.alloc3[S.mcat].map(function (r) { return r.map(function () { return 0; }); }); renderApp(); return;
+      }
       const ne = e.target.closest('[data-nevent]');
       if (ne) { const k = ne.dataset.nevent; if (S.notifyEvents.indexOf(k) >= 0) S.notifyEvents = S.notifyEvents.filter((x) => x !== k); else S.notifyEvents.push(k); renderApp(); return; }
       const rc = e.target.closest('[data-rpt]');

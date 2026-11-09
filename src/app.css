@@ -660,3 +660,14 @@ button.gitem { cursor:pointer; text-align:left; }
 .rpt-line .rpt-check .nm { font-size:11px; }
 .cmp { margin-left:6px; }
 .cmp-in { width:250px; height:26px; font-size:10.5px; }
+
+.mtx3 td.mcell { display:flex; align-items:center; gap:6px; padding:4px 8px; }
+.mtx-ck { width:15px; height:15px; flex:0 0 15px; border:1px solid #C9D2E2; border-radius:4px; background:#fff; padding:0; cursor:pointer; position:relative; }
+.mtx-ck.on { background:var(--blue); border-color:var(--blue); }
+.mtx-ck .mk { position:absolute; left:50%; top:50%; transform:translate(-50%,-54%); font-size:9px; color:#fff; line-height:1; }
+.mtx-num { width:84px; border:none; background:transparent; text-align:right; font:inherit; font-size:11px; color:var(--ink); padding:2px 3px; border-radius:4px; font-variant-numeric:tabular-nums; }
+.mtx-num:hover { background:#F3F7FF; }
+.mtx-num:focus { outline:none; background:#fff; box-shadow:0 0 0 2px rgba(80,149,255,.18); border-radius:4px; }
+
+.mtx3 td.mcell { display:table-cell; padding:3px 8px; }
+.mcell-in { display:flex; align-items:center; gap:6px; justify-content:flex-end; }
