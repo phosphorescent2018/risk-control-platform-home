@@ -523,3 +523,14 @@ button.gitem { cursor:pointer; text-align:left; }
 .gmeta .num { color:var(--ink); text-align:right; font-variant-numeric:tabular-nums; }
 .gmeta .time { color:var(--muted); font-variant-numeric:tabular-nums; }
 .gmeta .desc { color:var(--muted); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:9.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.gblock { border:1px solid var(--line); border-radius:10px; background:#fff; transition:border-color .15s ease, box-shadow .15s ease; }
+.gblock.open { border-color:#BCD2F7; box-shadow:0 0 0 3px rgba(80,149,255,.10); }
+.gblock .gsel-box { border:none; background:transparent; box-shadow:none; border-radius:10px 10px 0 0; min-height:40px; padding:7px 30px 7px 10px; }
+.gblock .gsel-box:hover { border:none; }
+.gblock .gsel-sum { padding:0 10px 8px; margin-top:0; }
+.gblock .gmeta-list { margin-top:0; border:none; border-top:1px solid #F2F4F8; border-radius:0; }
+.gblock .gmeta-head { padding:6px 10px; }
+.gblock .gmeta { padding:6px 10px; }
+.gopt { padding:6px 8px; line-height:1.25; }
+.gpop-list { gap:1px; }

@@ -255,6 +255,7 @@
         field('描述', '<input class="input" id="batchDesc" placeholder="可选，一句话说明" value="' + (S.desc || '').replace(/"/g, '&quot;') + '">') +
       '</div>' +
       '<div class="field" style="margin-top:14px"><label>客户分组<i class="req">*</i></label>' +
+        '<div class="gblock' + (S.groupOpen ? ' open' : '') + '">' +
         '<div class="gsel">' +
           '<button class="gsel-box' + (S.groupOpen ? ' open' : '') + '" data-gopen>' +
             '<div class="gchips">' + (selChips || '<span class="gsel-ph">选择客户分组</span>') + '</div>' +
@@ -268,6 +269,7 @@
         '</div>' +
         '<div class="gsel-sum">已选 <b>' + cfg.groups.length + '</b> 个分组 · 合计 <b>' + fmt(cfg.crowd) + '</b> 位客户</div>' +
         (cfg.groups.length ? '<div class="gmeta-list"><div class="gmeta-head"><span>分组名称</span><span>客户数</span><span>更新时间</span><span>筛选条件</span></div>' + selDetails + '</div>' : '') +
+        '</div>' +
       '</div>' +
       '<div class="form-foot split"><div class="run-sum"><span>预计 <b>' + wan(cfg.crowd) + '</b> 人</span><i>·</i><span><b>' + fmt(cfg.shards) + '</b> 分片</span><i>·</i><span>约 <b>' + hhmm(cfg.runMin) + '</b></span></div>' +
         (cfg.groups.length ? '' : '<span class="foot-hint">请选择至少一个客户分组</span>') +
