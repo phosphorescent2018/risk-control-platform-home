@@ -118,8 +118,7 @@
 
   function renderHead() {
     if (S.view === 'list') {
-      return '<div class="ws-top"><div class="ws-left"><div class="ws-h1">跑批记录</div></div>' +
-        '<div class="ws-right"><button class="btn primary" data-new>跑批发起</button></div></div>';
+      return '<div class="ws-top"><div class="ws-left"><div class="ws-h1">跑批记录</div></div></div>';
     }
     if (S.view === 'create') {
       const s = cur();
