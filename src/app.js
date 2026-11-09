@@ -67,7 +67,7 @@
   const S = {
     view: 'list', tab: 'run', batchId: null,
     strategy: 'credit_offline', versionType: 'FORMAL', batchName: '', desc: '',
-    groups: ['wallet_active'], selDay: '2026-10-23', calOpen: false,
+    groups: ['wallet_active'], selDay: '2026-10-23', calOpen: true,
     pickerDraft: [], pickerSearch: '', running: false, pct: 0, timer: null, lastShard: -1
   };
 
@@ -119,11 +119,11 @@
   function renderHead() {
     if (S.view === 'list') {
       return '<div class="ws-top"><div class="ws-left"><div class="ws-h1">跑批记录</div></div>' +
-        '<div class="ws-right"><button class="btn primary" data-new>发起跑批</button></div></div>';
+        '<div class="ws-right"><button class="btn primary" data-new>跑批发起</button></div></div>';
     }
     if (S.view === 'create') {
       const s = cur();
-      return '<div class="ws-top"><div class="ws-left"><div class="ws-h1">发起跑批</div></div>' +
+      return '<div class="ws-top"><div class="ws-left"><div class="ws-h1">跑批发起</div></div>' +
         '<div class="ws-right"><div class="slice-chip"><span>切片日</span><b>' + s.sliceDate + '</b><i>' + s.sliceTime + '</i></div></div></div>';
     }
     const b = currentBatch(); if (!b) return '';
@@ -165,7 +165,7 @@
         '<td><span class="tag ' + ps.c + '">' + ps.t + '</span></td>' +
         '</tr>';
     }).join('');
-    $('#panelList').innerHTML = renderReadiness() + '<div class="list-head"><h3>跑批记录</h3></div>' + '<table class="batch-table"><thead><tr><th>批次名称</th><th>批次号</th><th>策略</th><th>切片日</th><th class="r">人数</th><th>状态</th><th class="r">耗时</th><th>推送</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    $('#panelList').innerHTML = '<div class="list-head"><h3>跑批记录</h3></div>' + '<table class="batch-table"><thead><tr><th>批次名称</th><th>批次号</th><th>策略</th><th>切片日</th><th class="r">人数</th><th>状态</th><th class="r">耗时</th><th>推送</th></tr></thead><tbody>' + rows + '</tbody></table>';
   }
 
   /* ---------- create ---------- */
@@ -249,12 +249,7 @@
   }
 
   function renderCreate() {
-    const s = cur();
-    const st = dayStatus(s, s.sliceDate);
-    const ok = [st.wallet, st.od, st.pool].filter((v) => v === 0).length;
-    $('#panelCreate').innerHTML = '<section class="box readiness"><div class="ready-row"><span class="ready-dot"></span><b>切片已就绪</b>' +
-      '<span class="ready-meta">切片日 ' + s.sliceDate + ' ' + s.sliceTime + ' · ' + ok + '/3 源就绪 · ' + (ok === 3 ? '59/59' : (56 + ok) + '/59') + ' 检查通过 · 7/7 表</span></div></section>' +
-      '<div style="margin-top:14px">' + renderConfigForm() + '</div>';
+    $('#panelCreate').innerHTML = renderReadiness() + '<div style="margin-top:14px">' + renderConfigForm() + '</div>';
   }
 
   /* ---------- group picker ---------- */
