@@ -182,7 +182,7 @@
         '<td><span class="tag ' + ps.c + '">' + ps.t + '</span></td>' +
         '</tr>';
     }).join('');
-    $('#panelList').innerHTML = renderReadiness() + '<div class="box" style="margin-top:14px"><div class="box-head"><div><h3>批次列表</h3><p class="sub">共 ' + BATCHES.length + ' 个批次 · 点击任意一行查看进度与报告</p></div></div>' + '<table class="batch-table"><thead><tr><th>批次名称</th><th>批次号</th><th>策略</th><th>切片日</th><th class="r">人数</th><th>状态</th><th class="r">耗时</th><th>推送</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+    $('#panelList').innerHTML = renderReadiness() + '<div class="box" style="margin-top:14px"><div class="box-head"><div><h3>批次列表</h3><p class="sub">共 ' + BATCHES.length + ' 个批次 · 点击任意一行查看进度与报告</p></div></div>' + '<table class="batch-table"><thead><tr><th>批次名称</th><th>批次号</th><th>策略</th><th>切片日</th><th class="r">人数</th><th>跑批状态</th><th class="r">耗时</th><th>推送状态</th></tr></thead><tbody>' + rows + '</tbody></table>' +
       '<div class="pager"><span>共 ' + total + ' 条</span><span class="sp"></span>' +
       '<select class="input pgsize" id="pageSize">' + [10, 20, 50].map(function (n) { return '<option value="' + n + '"' + (n === S.pageSize ? ' selected' : '') + '>' + n + ' 条/页</option>'; }).join('') + '</select>' +
       '<button class="pgbtn" data-page="prev"' + (S.page <= 1 ? ' disabled' : '') + '>‹</button>' +
