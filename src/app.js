@@ -181,7 +181,7 @@
         '<td><span class="tag ' + ps.c + '">' + ps.t + '</span></td>' +
         '<td class="r">' + dur + '</td>' +
         '<td class="ops">' +
-          '<button class="icbtn" title="查看报告" data-open="' + b.id + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 3.5h7l4 4v13H7z"/><path d="M14 3.5v4h4"/><path d="M9.5 12h6M9.5 15.5h6"/></svg></button>' +
+          '<button class="icbtn" title="查看报告（独立页面）" data-report-link="' + b.id + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 3.5h7l4 4v13H7z"/><path d="M14 3.5v4h4"/><path d="M9.5 12h6M9.5 15.5h6"/></svg></button>' +
           '<button class="icbtn" title="暂停" data-act="pause" data-id="' + b.id + '"' + (b.status === 'running' ? '' : ' disabled') + '><svg viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="5" width="3.6" height="14" rx="1.2"/><rect x="13.4" y="5" width="3.6" height="14" rx="1.2"/></svg></button>' +
           '<button class="icbtn" title="终止" data-act="stop" data-id="' + b.id + '"' + (b.status === 'running' ? '' : ' disabled') + '><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>' +
           '<button class="icbtn" title="继续进行" data-act="resume" data-id="' + b.id + '"' + (b.status === 'stopped' ? '' : ' disabled') + '><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg></button>' +
@@ -866,6 +866,7 @@
       const pg = e.target.closest('[data-page]');
       if (pg) { const v = pg.dataset.page; if (v === 'prev') S.page = Math.max(1, S.page - 1); else if (v === 'next') S.page = S.page + 1; else S.page = +v; renderApp(); return; }
       if (e.target.id === 'pageSize') { S.pageSize = +e.target.value; S.page = 1; renderApp(); return; }
+      if (e.target.closest('[data-report-link]')) { toast('批次事件报告为独立页面，后续接入（mock）'); return; }
       const act = e.target.closest('[data-act]');
       if (act && !act.disabled) {
         const bb = BATCHES.find((x) => x.id === act.dataset.id);
