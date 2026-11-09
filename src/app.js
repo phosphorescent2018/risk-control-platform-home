@@ -130,7 +130,7 @@
 
   function renderHead() {
     if (S.view === 'list') {
-      return '<div class="ws-top"><div class="ws-left"><div class="ws-h1">跑批作业处理</div></div></div>';
+      return '<div class="ws-top"><div class="ws-left"><div class="ws-h1">跑批作业处理</div></div><div class="ws-right"><button class="btn primary" data-new>发起跑批</button></div></div>';
     }
     if (S.view === 'create') {
       const s = cur();
@@ -178,7 +178,7 @@
         '<td><span class="tag ' + ps.c + '">' + ps.t + '</span></td>' +
         '</tr>';
     }).join('');
-    $('#panelList').innerHTML = renderReadiness() + '<div class="box" style="margin-top:14px"><div class="box-head"><div><h3>批次列表</h3><p class="sub">共 ' + BATCHES.length + ' 个批次 · 点击任意一行查看进度与报告</p></div><button class="btn primary" data-new>发起跑批</button></div>' + '<table class="batch-table"><thead><tr><th>批次名称</th><th>批次号</th><th>策略</th><th>切片日</th><th class="r">人数</th><th>状态</th><th class="r">耗时</th><th>推送</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    $('#panelList').innerHTML = renderReadiness() + '<div class="box" style="margin-top:14px"><div class="box-head"><div><h3>批次列表</h3><p class="sub">共 ' + BATCHES.length + ' 个批次 · 点击任意一行查看进度与报告</p></div></div>' + '<table class="batch-table"><thead><tr><th>批次名称</th><th>批次号</th><th>策略</th><th>切片日</th><th class="r">人数</th><th>状态</th><th class="r">耗时</th><th>推送</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
 
   /* ---------- create ---------- */
