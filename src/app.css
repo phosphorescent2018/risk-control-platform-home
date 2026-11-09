@@ -645,3 +645,11 @@ button.gitem { cursor:pointer; text-align:left; }
 .mtx3 td.mcell { cursor:pointer; text-align:right; }
 .mtx3 td.mcell:hover { background:#F7FAFF; }
 .mtx3 td.off b { color:#C2C9D6; }
+
+.rpt-rows { display:flex; flex-direction:column; border:1px solid var(--line); border-radius:8px; padding:4px 12px; background:#fff; }
+.rpt-line { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:5px 0; border-bottom:1px dashed #F3F5F9; }
+.rpt-line:last-child { border-bottom:none; }
+.rpt-line .rpt-check { padding:5px 2px; }
+.cmp { display:flex; align-items:center; gap:6px; }
+.cmp-l { font-size:10px; color:var(--muted); display:inline-flex; align-items:center; gap:2px; }
+.cmp-in { width:230px; height:28px; font-size:10.5px; }

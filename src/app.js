@@ -67,7 +67,7 @@
   const S = {
     view: 'create', tab: 'run', batchId: null,
     strategy: 'credit_offline', business: 'MTN_Uganda', version: 'v20', versionType: 'FORMAL', batchName: '', desc: '',
-    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, reportView: 'list', reports: [], webhook: '', notifyEvents: [], confirmOpen: false, groupOpen: false, groupUp: false, pushArm: false, mcat: 'inc',
+    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, reportView: 'list', reports: [], rptCompare: {}, webhook: '', notifyEvents: [], confirmOpen: false, groupOpen: false, groupUp: false, pushArm: false, mcat: 'inc',
     pickerDraft: [], pickerSearch: '', running: false, pct: 0, timer: null, lastShard: -1
   };
 
@@ -261,24 +261,14 @@
         field('策略版本<i class="req">*</i>', sel('verSel', verOpts)) +
         field('批次名称<i class="req">*</i>', '<input class="input" id="batchName" placeholder="例如：贷前-' + dateISO(new Date()).slice(5).replace('-', '') + '" value="' + (S.batchName || '').replace(/"/g, '&quot;') + '">') +
       '</div>' +
-      '<div class="field" style="margin-top:12px"><label>报告<span class="lbl-note">可多选，不选则不生成报告</span></label>' +
-        '<div class="rpt-checks">' + REPORT_DEFS.map((d) => '<button class="rpt-check' + (S.reports.indexOf(d.code) >= 0 ? ' on' : '') + '" data-rpt="' + d.code + '"><span class="cbx"></span><span class="nm">' + d.name + '</span></button>').join('') + '</div>' +
-      '</div>' +
-      '<div class="field" style="margin-top:14px"><label>客户分组<i class="req">*</i></label>' +
-        '<div class="gblock' + (S.groupOpen ? ' open' : '') + '">' +
-        '<div class="gsel">' +
-          '<div class="gsel-box' + (S.groupOpen ? ' open' : '') + '" data-gopen>' +
-            '<span class="gsel-inline">' + (cfg.groups.length ? '已选 <b>' + cfg.groups.length + '</b> 个分组 · 合计 <b>' + fmt(cfg.crowd) + '</b> 位客户' : '<span class="gsel-ph">未选择客户分组</span>') + '</span>' +
-            '<button class="gadd" data-gopen><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 2.2v7.6M2.2 6h7.6"/></svg>' + (S.groupOpen ? '收起' : '添加分组') + '</button>' +
-          '</div>' +
-          (S.groupOpen ? '<div class="gpop' + (S.groupUp ? ' up' : '') + '">' +
-            '<div class="gp-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.2"/><path d="M16 16l4.5 4.5" stroke-linecap="round"/></svg><input id="gSearch" placeholder="搜索分组名称" value="' + (S.gsearch || '').replace(/"/g, '&quot;') + '"></div>' +
-            '<div class="gpop-list">' + listRows + '</div>' +
-            '<div class="gpop-foot"><span>已选 ' + cfg.groups.length + ' 个 · 合计 ' + fmt(cfg.crowd) + ' 人</span><span class="sp"></span><button data-gclear>清空</button><button data-gdone>完成</button></div>' +
-          '</div>' : '') +
-        '</div>' +
-        (cfg.groups.length ? '<div class="gmeta-list"><div class="gmeta-head"><span>分组名称</span><span>客户数</span><span>更新时间</span><span>筛选条件</span></div>' + selDetails + '</div>' : '') +
-        '</div>' +
+      '<div class="field" style="margin-top:12px"><label>报告<span class="lbl-note">可多选，不选则不生成报告；勾选后需填写对比批次</span></label>' +
+        '<div class="rpt-rows">' + REPORT_DEFS.map((d) => {
+          const on = S.reports.indexOf(d.code) >= 0;
+          return '<div class="rpt-line' + (on ? ' on' : '') + '">' +
+            '<button class="rpt-check" data-rpt="' + d.code + '"><span class="cbx"></span><span class="nm">' + d.name + '</span></button>' +
+            (on ? '<span class="cmp"><span class="cmp-l">对比批次<i class="req">*</i></span><input class="input cmp-in" data-cmp="' + d.code + '" placeholder="例如 459_20261028091106" value="' + (S.rptCompare[d.code] || '').replace(/"/g, '&quot;') + '"></span>' : '') +
+          '</div>';
+        }).join('') + '</div>' +
       '</div>' +
       '<div class="form-sec"><div class="form-sec-head"><b>通知推送</b><span class="opt-tag">非必填</span><span class="fs-sub">关键节点回调到你的 webhook</span></div>' +
         '<div class="field"><label>Webhook 地址</label><input class="input" id="webhook" placeholder="https://example.com/webhook/risk-batch" value="' + (S.webhook || '').replace(/"/g, '&quot;') + '"></div>' +
@@ -667,6 +657,7 @@
         row('客户分组', names + '（' + groups.length + ' 个）') +
         row('预计规模', wan(cfg.crowd) + ' 人') +
         row('报告', S.reports.length ? S.reports.map((c) => (REPORT_DEFS.find((d) => d.code === c) || {}).name).join('、') : '不生成') +
+        row('对比批次', S.reports.length ? S.reports.map((c) => { const d = REPORT_DEFS.find((x) => x.code === c); return (d ? d.name : c) + ' → ' + (S.rptCompare[c] || '未填写'); }).join('；') : '—') +
         row('通知推送', S.webhook ? S.webhook + ' · ' + S.notifyEvents.length + ' 个场景' : '未配置') +
       '</div>' +
       '<div class="cf-note">发起后可在执行页随时停止；已写入的分片数据不会回滚。</div>' +
@@ -777,6 +768,8 @@
       if (launch && !launch.disabled) {
         if (!S.groups.length) { toast('请选择至少一个客户分组'); return; }
         if (!S.batchName.trim()) { toast('请填写批次名称'); const el = $('#batchName'); if (el) el.focus(); return; }
+        const miss = S.reports.find((c) => !(S.rptCompare[c] || '').trim());
+        if (miss) { const d = REPORT_DEFS.find((x) => x.code === miss); toast('请填写「' + (d ? d.name : miss) + '」的对比批次'); const el = document.querySelector('[data-cmp="' + miss + '"]'); if (el) el.focus(); return; }
         S.confirmOpen = true; renderApp(); return;
       }
       if (e.target.closest('[data-confirm-cancel]')) { S.confirmOpen = false; renderApp(); return; }
@@ -857,6 +850,7 @@
       if (e.target.id === 'verSel') { S.version = e.target.value; renderApp(); }
       if (e.target.id === 'batchName') S.batchName = e.target.value;
       if (e.target.id === 'webhook') S.webhook = e.target.value;
+      if (e.target.dataset && e.target.dataset.cmp) S.rptCompare[e.target.dataset.cmp] = e.target.value;
       if (e.target.id === 'batchDesc') S.desc = e.target.value;
       if (e.target.id === 'gSearch') { S.gsearch = e.target.value; renderApp(); const i = $('#gSearch'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
     });
