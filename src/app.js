@@ -242,7 +242,7 @@
       '<span class="gchip" title="' + g.updated + ' · ' + g.desc + '"><b>' + g.name + '</b><span class="n">' + fmt(g.crowd) + '</span><i class="x" data-gremove="' + g.id + '">×</i></span>'
     ).join('');
     const selDetails = s.groups.filter((g) => S.groups.includes(g.id)).map((g) =>
-      '<div class="gmeta"><span class="nm">' + g.name + '</span><span class="num">' + fmt(g.crowd) + '</span><span class="time">' + g.updated + '</span><span class="desc">' + g.desc + '</span></div>'
+      '<div class="gmeta"><span class="nm">' + g.name + '</span><span class="num">' + fmt(g.crowd) + '</span><span class="time">' + g.updated + '</span><span class="desc">' + g.desc + '</span><i class="gm-x" data-gremove="' + g.id + '" title="移除">×</i></div>'
     ).join('');
     const q = (S.gsearch || '').trim().toLowerCase();
     const listRows = s.groups.filter((g) => !q || g.name.toLowerCase().includes(q)).map((g) => {
@@ -268,9 +268,8 @@
         '<div class="gblock' + (S.groupOpen ? ' open' : '') + '">' +
         '<div class="gsel">' +
           '<div class="gsel-box' + (S.groupOpen ? ' open' : '') + '" data-gopen>' +
-            '<div class="gchips">' + (selChips || '<span class="gsel-ph">选择客户分组</span>') + '</div>' +
+            '<span class="gsel-inline">' + (cfg.groups.length ? '已选 <b>' + cfg.groups.length + '</b> 个分组 · 合计 <b>' + fmt(cfg.crowd) + '</b> 位客户' : '<span class="gsel-ph">未选择客户分组</span>') + '</span>' +
             '<button class="gadd" data-gopen><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 2.2v7.6M2.2 6h7.6"/></svg>' + (S.groupOpen ? '收起' : '添加分组') + '</button>' +
-            '<svg class="gsel-chev" viewBox="0 0 10 6" fill="none" style="transform:translateY(-50%) rotate(' + (S.groupOpen ? 180 : 0) + 'deg)"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
           '</div>' +
           (S.groupOpen ? '<div class="gpop' + (S.groupUp ? ' up' : '') + '">' +
             '<div class="gp-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.2"/><path d="M16 16l4.5 4.5" stroke-linecap="round"/></svg><input id="gSearch" placeholder="搜索分组名称" value="' + (S.gsearch || '').replace(/"/g, '&quot;') + '"></div>' +
@@ -278,7 +277,6 @@
             '<div class="gpop-foot"><span>已选 ' + cfg.groups.length + ' 个 · 合计 ' + fmt(cfg.crowd) + ' 人</span><span class="sp"></span><button data-gclear>清空</button><button data-gdone>完成</button></div>' +
           '</div>' : '') +
         '</div>' +
-        '<div class="gsel-sum">已选 <b>' + cfg.groups.length + '</b> 个分组 · 合计 <b>' + fmt(cfg.crowd) + '</b> 位客户</div>' +
         (cfg.groups.length ? '<div class="gmeta-list"><div class="gmeta-head"><span>分组名称</span><span>客户数</span><span>更新时间</span><span>筛选条件</span></div>' + selDetails + '</div>' : '') +
         '</div>' +
       '</div>' +

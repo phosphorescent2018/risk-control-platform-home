@@ -609,3 +609,12 @@ button.gitem { cursor:pointer; text-align:left; }
 .gadd { display:inline-flex; align-items:center; gap:4px; height:24px; padding:0 9px; margin-left:2px; border:1px dashed #B9CDF0; border-radius:6px; background:#F7FAFF; color:var(--blue-deep); font:inherit; font-size:10.5px; cursor:pointer; flex:0 0 auto; }
 .gadd:hover { background:#EEF5FF; border-color:#9DBCEC; }
 .gadd svg { width:10px; height:10px; }
+
+.gsel-box { justify-content:space-between; }
+.gsel-inline { font-size:10.5px; color:var(--muted); }
+.gsel-inline b { color:var(--ink); font-variant-numeric:tabular-nums; }
+
+.gmeta-head, .gmeta { grid-template-columns:190px 110px 150px minmax(0,1fr) 22px; }
+.gmeta-head span:last-child { display:block; }
+.gm-x { font-style:normal; color:#B3BDCC; cursor:pointer; text-align:center; font-size:13px; line-height:1; }
+.gm-x:hover { color:var(--red); }
