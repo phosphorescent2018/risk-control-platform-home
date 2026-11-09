@@ -65,7 +65,7 @@
   };
 
   const S = {
-    view: 'list', tab: 'run', batchId: null,
+    view: 'create', tab: 'run', batchId: null,
     strategy: 'credit_offline', business: 'MTN_Uganda', version: 'v20', versionType: 'FORMAL', batchName: '', desc: '',
     groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, reportView: 'list', reports: [], webhook: '', notifyEvents: [], confirmOpen: false, groupOpen: false, groupUp: false, pushArm: false, mcat: 'inc',
     pickerDraft: [], pickerSearch: '', running: false, pct: 0, timer: null, lastShard: -1
@@ -257,7 +257,7 @@
         field('策略<i class="req">*</i>', sel('strategySel', stratOpts)) +
         field('版本类型<i class="req">*</i>', sel('versionSel', vtOpts)) +
       '</div>' +
-      '<div class="grid3">' +
+      '<div class="grid2">' +
         field('策略版本<i class="req">*</i>', sel('verSel', verOpts)) +
         field('批次名称<i class="req">*</i>', '<input class="input" id="batchName" placeholder="例如：贷前-' + dateISO(new Date()).slice(5).replace('-', '') + '" value="' + (S.batchName || '').replace(/"/g, '&quot;') + '">') +
       '</div>' +
