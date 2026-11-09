@@ -288,7 +288,7 @@
 
   const NOTIFY_EVENTS = [
     { k: 'BATCH_DONE', n: '跑批完成' },
-    { k: 'BATCH_RETRY', n: '跑批分片整体重试' },
+    { k: 'BATCH_RETRY', n: '存在失败分片' },
     { k: 'BATCH_FAILED', n: '跑批失败' },
     { k: 'REPORT_DONE', n: '报告生成完成' },
     { k: 'REPORT_FAILED', n: '报告生成失败' },
