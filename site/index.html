@@ -974,7 +974,7 @@ button.gitem { cursor:pointer; text-align:left; }
         (cfg.groups.length ? '<div class="gmeta-list"><div class="gmeta-head"><span>分组名称</span><span>客户数</span><span>更新时间</span><span>筛选条件</span></div>' + selDetails + '</div>' : '') +
         '</div>' +
       '</div>' +
-      '<div class="form-foot split"><div class="run-sum"><span>预计 <b>' + wan(cfg.crowd) + '</b> 人</span><i>·</i><span><b>' + fmt(cfg.shards) + '</b> 分片</span><i>·</i><span>约 <b>' + hhmm(cfg.runMin) + '</b></span></div>' +
+      '<div class="form-foot split"><div class="run-sum"><span>预计 <b>' + wan(cfg.crowd) + '</b> 人</span></div>' +
         (cfg.groups.length ? '' : '<span class="foot-hint">请选择至少一个客户分组</span>') +
         '<button class="btn primary" data-launch' + (cfg.groups.length ? '' : ' disabled') + '>发起跑批</button></div>' +
     '</section>';
@@ -1325,7 +1325,7 @@ button.gitem { cursor:pointer; text-align:left; }
         row('批次名称', S.batchName || '—') +
         row('切片日', s.sliceDate + ' ' + s.sliceTime) +
         row('客户分组', names + '（' + groups.length + ' 个）') +
-        row('预计规模', wan(cfg.crowd) + ' 人 · ' + fmt(cfg.shards) + ' 分片 · 约 ' + hhmm(cfg.runMin)) +
+        row('预计规模', wan(cfg.crowd) + ' 人') +
         row('报告', S.reports.length ? S.reports.map((c) => (REPORT_DEFS.find((d) => d.code === c) || {}).name).join('、') : '不生成') +
       '</div>' +
       '<div class="cf-note">发起后可在执行页随时停止；已写入的分片数据不会回滚。</div>' +
