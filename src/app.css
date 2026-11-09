@@ -684,3 +684,7 @@ button.gitem { cursor:pointer; text-align:left; }
 .mtx3 td.sum { text-align:right; padding-right:10px; }
 .mtx3 tr.mtx-sum td { text-align:left; padding-left:10px; }
 .mtx3 tr.mtx-sum td.r { text-align:right; padding-right:10px; }
+
+.mtx3 thead th, .mtx3 thead th:nth-child(n+2) { text-align:left; padding-left:10px; }
+.mtx3 thead th.r { text-align:right; padding-right:10px; }
+.mtx3 tbody td.mcell { text-align:left; }
