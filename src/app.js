@@ -373,14 +373,14 @@
     const ring = $('#ringFg'); if (ring) ring.setAttribute('stroke-dashoffset', String(2 * Math.PI * 52 * (1 - p)));
     set('rProcessed', fmt(Math.round(cfg.crowd * p)));
     set('rShards', fmt(Math.round(cfg.shards * p)) + ' / ' + fmt(cfg.shards));
-    set('rSpeed', Math.round(s.speed * (0.92 + Math.random() * 0.16)) + ' 万/h');
+    set('rSpeed', Math.round(s.speed * (0.97 + 0.03 * Math.sin(p * 14))) + ' 万/h');
     set('rEta', hhmm((1 - p) * total));
     set('rElapsed', hhmm(p * total));
     set('pDone', fmt(Math.round(cfg.shards * p)));
     set('pWait', fmt(cfg.shards - Math.round(cfg.shards * p)));
     const sub = $('#stRun'); if (sub) sub.textContent = pctText(p) + ' · 剩余 ' + hhmm((1 - p) * total);
-    drawLiveChart();
     const shardKey = Math.floor(p * 100);
+    if (S.lastChart !== shardKey) { S.lastChart = shardKey; drawLiveChart(); }
     if (S.lastShard !== shardKey) { S.lastShard = shardKey; drawShards($('#liveShards'), cfg.shards, Math.round(cfg.shards * p), 0, false); }
   }
 
@@ -700,12 +700,15 @@
     BATCHES.unshift(b);
     S.batchId = b.id; S.view = 'detail'; S.tab = 'run'; S.running = true; S.pct = 0; S.lastShard = -1;
     renderApp();
-    if (S.timer) clearInterval(S.timer);
-    S.timer = setInterval(function () {
-      S.pct = Math.min(1, S.pct + 0.04 + Math.random() * 0.012);
+    if (S.timer) cancelAnimationFrame(S.timer);
+    const t0 = performance.now(), DUR = 5000;
+    const step = function (ts) {
+      S.pct = Math.min(1, (ts - t0) / DUR);
       updateRunLive();
-      if (S.pct >= 1) finishRun();
-    }, 200);
+      if (S.pct >= 1) { finishRun(); return; }
+      S.timer = requestAnimationFrame(step);
+    };
+    S.timer = requestAnimationFrame(step);
     S.batchName = ''; S.desc = '';
     toast('跑批已发起：' + b.name);
   }
@@ -713,14 +716,14 @@
   function stopRun() {
     const b = currentBatch();
     if (!b || b.status !== 'running') return;
-    S.running = false; clearInterval(S.timer); S.timer = null;
+    S.running = false; if (S.timer) cancelAnimationFrame(S.timer); S.timer = null;
     b.status = 'stopped'; b.pct = S.pct;
     renderApp(); toast('已停止跑批（概念演示）');
   }
 
   function finishRun() {
     const b = currentBatch();
-    S.running = false; clearInterval(S.timer); S.timer = null; S.pct = 1;
+    S.running = false; if (S.timer) cancelAnimationFrame(S.timer); S.timer = null; S.pct = 1;
     if (!b) return;
     b.status = 'completed'; b.pct = 1;
     const total = totalMin(b.config);
