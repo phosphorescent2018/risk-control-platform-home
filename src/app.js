@@ -94,6 +94,7 @@
   function snap() {
     const s = cur();
     const groups = s.groups.filter((g) => S.groups.includes(g.id));
+    if (!groups.length) groups.push(s.groups[0]);
     const crowd = groups.reduce((a, g) => a + g.crowd, 0);
     return {
       strategy: S.strategy, versionType: S.versionType, groups: S.groups.slice(),
@@ -180,7 +181,7 @@
     const start = addDays(parseISO(s.sliceDate), -13);
     let cols = '';
     for (let i = 0; i < 14; i++) {
-      const dt = addDays(start, i), iso = dateISO(dt), st = dayStatus(s, iso);
+      const dt = addDays(start, i), iso = dateISO(dt), st = dayStatus(s, iso) || dayStatus(s, s.sliceDate);
       const bars = [st.wallet, st.od, st.pool].map((v) => '<i class="' + (v === 2 ? 'bad' : 'ok') + '"></i>').join('');
       cols += '<div class="cal-col ' + (iso === S.selDay ? 'sel' : '') + '" data-day="' + iso + '"><div class="cal-d">' + iso.slice(8) + '</div><div class="cal-bars">' + bars + '</div></div>';
     }
@@ -189,7 +190,7 @@
 
   function renderCalDetail() {
     const s = cur();
-    const day = S.selDay || s.sliceDate, st = dayStatus(s, day);
+    const day = S.selDay || s.sliceDate, st = dayStatus(s, day) || dayStatus(s, s.sliceDate);
     const names = ['钱包变量表', 'OD 变量表', '圈选池'], keys = ['wallet', 'od', 'pool'];
     const rows = names.map((nm, i) => {
       const v = st[keys[i]], base = s.medians[i];
@@ -207,8 +208,11 @@
     const cfg = snap();
     const version = S.versionType === 'FORMAL' ? s.official : s.beta;
     const opts = Object.values(STRATEGIES).map((x) =>
-      '<button class="opt ' + (x.key === S.strategy ? 'on' : '') + '" data-strategy="' + x.key + '"><b>' + x.label + '</b><i>' + x.scene + ' · ' + x.official + '</i></button>'
+      '<option value="' + x.key + '"' + (x.key === S.strategy ? ' selected' : '') + '>' + x.label + ' · ' + x.scene + '</option>'
     ).join('');
+    const chev = '<svg class="chev" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const vtOpts = '<option value="FORMAL"' + (S.versionType === 'FORMAL' ? ' selected' : '') + '>Official</option>' +
+      (s.beta ? '<option value="BETA"' + (S.versionType === 'BETA' ? ' selected' : '') + '>Test</option>' : '');
     const selRows = s.groups.filter((g) => S.groups.includes(g.id)).map((g) =>
       '<div class="gitem sel"><span class="nm">' + g.name + '</span><span class="gnum">' + fmt(g.crowd) + '</span><i class="gx" data-remove-group="' + g.id + '">×</i></div>'
     ).join('') || '<div class="gp-empty">暂无选择，从左侧选择分组</div>';
@@ -227,12 +231,8 @@
         field('批次名称<i class="req">*</i>', '<input class="input" id="batchName" placeholder="例如：贷前-1105" value="' + (S.batchName || '').replace(/"/g, '&quot;') + '">') +
       '</div>' +
       '<div class="grid3">' +
-        field('策略', '<div class="opts">' + opts + '</div>', 'span3') +
-      '</div>' +
-      '<div class="grid3">' +
-        field('版本类型', s.beta
-          ? '<div class="seg"><button data-version="FORMAL" class="' + (S.versionType === 'FORMAL' ? 'on' : '') + '">Official</button><button data-version="BETA" class="' + (S.versionType === 'BETA' ? 'on' : '') + '">Test</button></div>'
-          : '<div class="static">Official</div>') +
+        field('策略<i class="req">*</i>', '<div class="selwrap"><select class="input select" id="strategySel">' + opts + '</select>' + chev + '</div>') +
+        field('版本类型<i class="req">*</i>', '<div class="selwrap"><select class="input select" id="versionSel">' + vtOpts + '</select>' + chev + '</div>') +
         field('策略版本', '<div class="static">' + version + '</div>') +
       '</div>' +
       '<div class="field" style="margin-top:12px"><label>描述</label><textarea class="textarea" id="batchDesc" rows="1" placeholder="可选">' + (S.desc || '') + '</textarea></div>' +
@@ -663,6 +663,17 @@
       const ver = e.target.closest('[data-version]'); if (ver) { S.versionType = ver.dataset.version; renderApp(); return; }
     });
     document.addEventListener('input', function (e) {
+      if (e.target.id === 'strategySel') {
+        S.strategy = e.target.value;
+        const st = STRATEGIES[S.strategy];
+        if (!st.beta) S.versionType = 'FORMAL';
+        const ids = st.groups.map((g) => g.id);
+        S.groups = S.groups.filter((id) => ids.indexOf(id) >= 0);
+        if (!S.groups.length) S.groups = [ids[0]];
+        S.selDay = st.sliceDate;
+        renderApp();
+      }
+      if (e.target.id === 'versionSel') { S.versionType = e.target.value; renderApp(); }
       if (e.target.id === 'batchName') S.batchName = e.target.value;
       if (e.target.id === 'batchDesc') S.desc = e.target.value;
       if (e.target.id === 'gSearch') { S.gsearch = e.target.value; renderApp(); const i = $('#gSearch'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }

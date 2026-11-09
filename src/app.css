@@ -425,3 +425,7 @@ button.gitem { cursor:pointer; text-align:left; }
 .btn.warn { background:#E8A23B; border-color:#E8A23B; color:#fff; }
 .btn.warn:hover { background:#D9912B; border-color:#D9912B; }
 .arm span { display:block; margin-top:6px; font-size:10px; color:#B26B1F; text-align:center; }
+
+.selwrap { position:relative; }
+.selwrap select { appearance:none; -webkit-appearance:none; padding-right:30px; background:#fff; cursor:pointer; width:100%; }
+.selwrap .chev { position:absolute; right:11px; top:50%; transform:translateY(-50%); width:10px; height:6px; color:#9AA1B6; pointer-events:none; }
