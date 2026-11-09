@@ -854,7 +854,7 @@ button.gitem { cursor:pointer; text-align:left; }
   const S = {
     view: 'create', tab: 'run', batchId: null,
     strategy: 'credit_offline', business: 'MTN_Uganda', version: 'v20', versionType: 'FORMAL', batchName: '', desc: '',
-    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, reportView: 'list', reports: [], rptCompare: {}, webhook: '', notifyEvents: [], confirmOpen: false, groupOpen: false, groupUp: false, pushArm: false, mcat: 'inc',
+    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, sliceDate: '', reportView: 'list', reports: [], rptCompare: {}, webhook: '', notifyEvents: [], confirmOpen: false, groupOpen: false, groupUp: false, pushArm: false, mcat: 'inc',
     pickerDraft: [], pickerSearch: '', running: false, pct: 0, timer: null, lastShard: -1
   };
 
@@ -894,7 +894,7 @@ button.gitem { cursor:pointer; text-align:left; }
     const groups = s.groups.filter((g) => S.groups.includes(g.id));
     const crowd = groups.reduce((a, g) => a + g.crowd, 0);
     return {
-      strategy: S.strategy, business: S.business, version: S.version, reports: S.reports.slice(), webhook: S.webhook, notifyEvents: S.notifyEvents.slice(), versionType: S.versionType, groups: groups.map((g) => g.id), sliceDate: s.sliceDate, sliceTime: s.sliceTime,
+      strategy: S.strategy, business: S.business, version: S.version, reports: S.reports.slice(), webhook: S.webhook, notifyEvents: S.notifyEvents.slice(), versionType: S.versionType, groups: groups.map((g) => g.id), sliceDate: S.sliceDate || s.sliceDate, sliceTime: s.sliceTime,
       crowd, runMin: crowd ? Math.max(1, Math.round(crowd / (s.speed * 10000) * 60)) : 0,
       shards: Math.ceil(crowd / 4000)
     };
@@ -921,7 +921,7 @@ button.gitem { cursor:pointer; text-align:left; }
     if (S.view === 'create') {
       const s = cur();
       return '<div class="ws-top"><div class="ws-left"><div class="ws-h1">跑批发起</div></div>' +
-        '<div class="ws-right"><div class="slice-chip"><span>切片日</span><b>' + s.sliceDate + '</b><i>' + s.sliceTime + '</i></div></div></div>';
+        '<div class="ws-right"><div class="slice-chip"><span>切片日</span><b>' + (S.sliceDate || s.sliceDate) + '</b><i>' + s.sliceTime + '</i></div></div></div>';
     }
     const b = currentBatch(); if (!b) return '';
     const cfg = b.config, s = STRATEGIES[cfg.strategy];
@@ -968,7 +968,8 @@ button.gitem { cursor:pointer; text-align:left; }
 
   /* ---------- create ---------- */
   function dayStatus(s, dayISO) {
-    const diff = Math.round((parseISO(dayISO) - parseISO(s.sliceDate)) / 86400000);
+    const anchor = dateISO(addDays(new Date(), -2));
+    const diff = Math.round((parseISO(dayISO) - parseISO(anchor)) / 86400000);
     if (diff > 0) return { pending: true };
     const bad = diff === -9 || diff === -8 || diff === -7;
     return { wallet: 0, od: bad ? 2 : 0, pool: 0, pending: false };
@@ -991,7 +992,7 @@ button.gitem { cursor:pointer; text-align:left; }
 
   function renderCalDetail() {
     const s = cur();
-    const day = S.selDay || s.sliceDate, st = dayStatus(s, day);
+    const day = S.selDay || S.sliceDate || s.sliceDate, st = dayStatus(s, day);
     if (st.pending) {
       const eta = dateISO(addDays(parseISO(day), 2));
       return '<div class="cd-head"><b>' + day + '</b><span>数据未出</span><span>·</span><span>T+2，预计 ' + eta + ' 产出</span></div>' +
@@ -1016,6 +1017,8 @@ button.gitem { cursor:pointer; text-align:left; }
   function renderConfigForm() {
     const s = cur();
     const cfg = snap();
+    const _st = dayStatus(s, S.sliceDate || s.sliceDate);
+    const sliceReady = !!_st && !_st.pending && _st.wallet === 0 && _st.od === 0 && _st.pool === 0;
     const versions = s.versions || [s.official];
     const chev = '<svg class="chev" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     const sel = (id, opts) => '<div class="selwrap"><select class="input select" id="' + id + '">' + opts + '</select>' + chev + '</div>';
@@ -1044,8 +1047,9 @@ button.gitem { cursor:pointer; text-align:left; }
         field('策略<i class="req">*</i>', sel('strategySel', stratOpts)) +
         field('版本类型<i class="req">*</i>', sel('versionSel', vtOpts)) +
       '</div>' +
-      '<div class="grid2">' +
+      '<div class="grid3">' +
         field('策略版本<i class="req">*</i>', sel('verSel', verOpts)) +
+        field('切片日期<i class="req">*</i>', '<input class="input" type="date" id="sliceInput" min="' + dateISO(addDays(new Date(), -11)) + '" max="' + dateISO(addDays(new Date(), -2)) + '" value="' + (S.sliceDate || '') + '">') +
         field('批次名称<i class="req">*</i>', '<input class="input" id="batchName" placeholder="例如：贷前-' + dateISO(new Date()).slice(5).replace('-', '') + '" value="' + (S.batchName || '').replace(/"/g, '&quot;') + '">') +
       '</div>' +
       '<div class="field" style="margin-top:12px"><label>报告<span class="lbl-note">可多选，不选则不生成报告；勾选后需填写对比批次</span></label>' +
@@ -1064,8 +1068,9 @@ button.gitem { cursor:pointer; text-align:left; }
         '</div></div>' +
       '</div>' +
       '<div class="form-foot split"><div class="run-sum"><span>预计 <b>' + wan(cfg.crowd) + '</b> 人</span></div>' +
+        (sliceReady ? '' : '<span class="foot-hint">所选切片日缺数，无法发起</span>') +
         (cfg.groups.length ? '' : '<span class="foot-hint">请选择至少一个客户分组</span>') +
-        '<button class="btn primary" data-launch' + (cfg.groups.length ? '' : ' disabled') + '>发起跑批</button></div>' +
+        '<button class="btn primary" data-launch' + (cfg.groups.length && sliceReady ? '' : ' disabled') + '>发起跑批</button></div>' +
     '</section>';
   }
 
@@ -1080,7 +1085,7 @@ button.gitem { cursor:pointer; text-align:left; }
 
   function renderReadiness() {
     const s = cur();
-    const day = s.sliceDate;
+    const day = S.sliceDate || s.sliceDate;
     const st = dayStatus(s, day) || dayStatus(s, s.sliceDate);
     const ok = [st.wallet, st.od, st.pool].filter((v) => v === 0).length;
     const cal = S.calOpen
@@ -1088,7 +1093,8 @@ button.gitem { cursor:pointer; text-align:left; }
         '<div class="legend"><span><b style="background:#5BC08D"></b>就绪</span><span><b style="background:#E06B6B"></b>缺数</span><span><b style="background:#C9D0DC"></b>待出数</span></div></div>' +
         '<div class="cal">' + renderCalendar() + '</div><div class="cal-detail">' + renderCalDetail() + '</div></div>'
       : '';
-    return '<section class="box readiness"><div class="ready-row"><span class="ready-dot"></span><b>切片已就绪</b>' +
+    const ready = ok === 3;
+    return '<section class="box readiness"><div class="ready-row"><span class="ready-dot"' + (ready ? '' : ' style="background:#E06B6B;box-shadow:0 0 0 3px rgba(224,107,107,.12)"') + '></span><b>' + (ready ? '切片已就绪' : '切片未就绪') + '</b>' +
       '<span class="ready-meta">切片日 ' + day + ' ' + s.sliceTime + ' · ' + ok + '/3 源就绪 · ' + (ok === 3 ? '59/59' : (56 + ok) + '/59') + ' 检查通过 · 7/7 表</span>' +
       '<button class="btn sm ghost" data-toggle-cal> ' + (S.calOpen ? '收起日历' : '查看日历') + ' <svg viewBox="0 0 10 6" fill="none" style="width:9px;height:5px;transform:rotate(' + (S.calOpen ? 180 : 0) + 'deg)"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
     '</div>' + cal + '</section>';
@@ -1464,7 +1470,7 @@ button.gitem { cursor:pointer; text-align:left; }
         row('策略', s.label + ' · ' + s.scene) +
         row('版本', (S.versionType === 'FORMAL' ? 'Official' : 'Test') + ' · ' + S.version) +
         row('批次名称', S.batchName || '—') +
-        row('切片日', s.sliceDate + ' ' + s.sliceTime) +
+        row('切片日', (S.sliceDate || s.sliceDate) + ' ' + s.sliceTime) +
         row('客户分组', names + '（' + groups.length + ' 个）') +
         row('预计规模', wan(cfg.crowd) + ' 人') +
         row('报告', S.reports.length ? S.reports.map((c) => (REPORT_DEFS.find((d) => d.code === c) || {}).name).join('、') : '不生成') +
@@ -1497,6 +1503,8 @@ button.gitem { cursor:pointer; text-align:left; }
   }
 
   function startRun() {
+    const _st0 = dayStatus(cur(), S.sliceDate || cur().sliceDate);
+    if (!_st0 || _st0.pending || _st0.wallet !== 0 || _st0.od !== 0) { toast('所选切片日缺数，无法发起'); return; }
     if (!S.groups.length) { toast('请选择至少一个客户分组'); return; }
     if (S.running) return;
     if (!S.batchName.trim()) { toast('请填写批次名称'); const el = $('#batchName'); if (el) el.focus(); return; }
@@ -1676,6 +1684,7 @@ button.gitem { cursor:pointer; text-align:left; }
       if (e.target.id === 'bizSel') { S.business = e.target.value; renderApp(); }
       if (e.target.id === 'verSel') { S.version = e.target.value; renderApp(); }
       if (e.target.id === 'batchName') S.batchName = e.target.value;
+      if (e.target.id === 'sliceInput') { S.sliceDate = e.target.value; S.selDay = e.target.value; renderApp(); }
       if (e.target.id === 'webhook') S.webhook = e.target.value;
       if (e.target.dataset && e.target.dataset.cmp) S.rptCompare[e.target.dataset.cmp] = e.target.value;
       if (e.target.id === 'batchDesc') S.desc = e.target.value;
@@ -1700,7 +1709,8 @@ button.gitem { cursor:pointer; text-align:left; }
     const sliceDay = dateISO(addDays(new Date(), -2));
     Object.values(STRATEGIES).forEach((x) => { x.sliceDate = sliceDay; });
     S.todayISO = dateISO(new Date());
-    S.selDay = STRATEGIES[S.strategy].sliceDate;
+    S.sliceDate = dateISO(addDays(new Date(), -2));
+    S.selDay = S.sliceDate;
     bind(); renderApp(); clock();
   }
 
