@@ -34,7 +34,7 @@
         { id: 'wallet_silent', name: '沉默户回捞', crowd: 2310000, updated: '2026-11-03 18:02:44', desc: '30 天无交易 AND 未 optout' },
         { id: 'wallet_sample', name: '模型样本 Test', crowd: 50000, updated: '2026-11-01 09:30:12', desc: 'model_sample = 1' }
       ],
-      days: [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+      days: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
       odDays: [0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0],
       counts: [44443983, 12287629, 90177900], medians: [43900000, 12150000, 89100000],
       res: [{ k: 'CPU 峰值', v: '74%', p: 74 }, { k: '磁盘写 IO', v: '98%', p: 98 }, { k: '集群写入', v: '+25 GB', p: 82 }],
@@ -53,7 +53,7 @@
         { id: 'loan_high', name: '高价值在贷户', crowd: 860000, updated: '2026-11-04 21:40:10', desc: 'current_limit >= 50000' },
         { id: 'loan_cut', name: '降额实验组', crowd: 320000, updated: '2026-11-02 16:05:55', desc: 'experiment_group = cut' }
       ],
-      days: [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+      days: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
       odDays: [0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0],
       counts: [44120000, 11880000, 88900000], medians: [43900000, 12150000, 89100000],
       res: [{ k: 'CPU 峰值', v: '22%', p: 22 }, { k: '磁盘写 IO', v: '38%', p: 38 }, { k: '集群写入', v: '+3.2 GB', p: 30 }],
@@ -181,7 +181,7 @@
     let cols = '';
     for (let i = 0; i < 14; i++) {
       const dt = addDays(start, i), iso = dateISO(dt), st = dayStatus(s, iso);
-      const bars = [st.wallet, st.od, st.pool].map((v) => '<i class="' + (v === 2 ? 'bad' : v === 1 ? 'warn' : 'ok') + '"></i>').join('');
+      const bars = [st.wallet, st.od, st.pool].map((v) => '<i class="' + (v === 2 ? 'bad' : 'ok') + '"></i>').join('');
       cols += '<div class="cal-col ' + (iso === S.selDay ? 'sel' : '') + '" data-day="' + iso + '"><div class="cal-d">' + iso.slice(8) + '</div><div class="cal-bars">' + bars + '</div></div>';
     }
     return cols;
@@ -196,7 +196,7 @@
       if (v === 2) return '<div class="cd-row"><span class="nm">' + nm + '</span><span class="num">0</span><span class="dl">—</span><span class="tag bad">缺数</span></div>';
       const count = Math.round(base * (0.985 + ((i + day.charCodeAt(9)) % 5) * 0.006));
       const delta = (count - base) / base * 100;
-      return '<div class="cd-row"><span class="nm">' + nm + '</span><span class="num">' + fmt(count) + '</span><span class="dl">' + (delta >= 0 ? '+' : '') + delta.toFixed(1) + '%</span>' + (v === 1 ? '<span class="tag warn">偏低</span>' : '<span class="tag ok">就绪</span>') + '</div>';
+      return '<div class="cd-row"><span class="nm">' + nm + '</span><span class="num">' + fmt(count) + '</span><span class="dl">' + (delta >= 0 ? '+' : '') + delta.toFixed(1) + '%</span><span class="tag ok">就绪</span></div>';
     }).join('');
     const ok = [st.wallet, st.od, st.pool].filter((v) => v === 0).length;
     return '<div class="cd-head"><b>' + day + '</b><span>' + ok + '/3 源就绪</span><span>·</span><span>59 项检查 ' + (ok === 3 ? '59/59 通过' : (56 + ok) + '/59 通过') + '</span></div>' + rows;
@@ -239,7 +239,7 @@
     const ok = [st.wallet, st.od, st.pool].filter((v) => v === 0).length;
     const cal = S.calOpen
       ? '<div class="ready-body"><div class="cal-head"><span>' + md(dateISO(addDays(parseISO(day), -13))) + ' → ' + md(day) + '</span>' +
-        '<div class="legend"><span><b style="background:#5BC08D"></b>就绪</span><span><b style="background:#E7B04A"></b>偏低</span><span><b style="background:#E06B6B"></b>缺数</span></div></div>' +
+        '<div class="legend"><span><b style="background:#5BC08D"></b>就绪</span><span><b style="background:#E06B6B"></b>缺数</span></div></div>' +
         '<div class="cal">' + renderCalendar() + '</div><div class="cal-detail">' + renderCalDetail() + '</div></div>'
       : '';
     return '<section class="box readiness"><div class="ready-row"><span class="ready-dot"></span><b>切片已就绪</b>' +
