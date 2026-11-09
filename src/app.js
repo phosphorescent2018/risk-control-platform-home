@@ -677,7 +677,11 @@
   }
 
   /* ---------- shell ---------- */
+  let lastView = null, lastTab = null;
   function renderApp() {
+    const pw = document.querySelector('.panel-wrap');
+    const sameCtx = S.view === lastView && S.tab === lastTab;
+    const keepY = pw ? pw.scrollTop : 0;
     $$('.subnav-item').forEach((el) => el.classList.toggle('on', el.dataset.nav === (S.view === 'create' ? 'create' : 'list')));
     $('#wsHead').innerHTML = '<div class="ws-head">' + renderHead() + '</div>';
     $('#stages').hidden = S.view !== 'detail';
@@ -693,6 +697,8 @@
     }
     const mr = $('#modalRoot');
     if (mr) mr.innerHTML = S.confirmOpen ? renderConfirm() : '';
+    lastView = S.view; lastTab = S.tab;
+    if (pw) pw.scrollTop = sameCtx ? keepY : 0;
   }
 
   function renderConfirm() {
