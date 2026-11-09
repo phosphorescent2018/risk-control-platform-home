@@ -575,19 +575,30 @@
       g[4][4] += diff;
       return g;
     };
-    const AMT = { inc: [8000, 6000, 4000, 2500, 1500], dec: [6000, 5000, 3500, 2000, 1200], keep: [0, 0, 0, 0, 0] };
+    const BASE = [12000, 10000, 8000, 6000, 4000];
+    const defMult = function (c) {
+      if (c === 'inc') return [{ m: 1, s: 5 }, { m: 2.5, s: 95 }];
+      if (c === 'dec') return [{ m: 1, s: 40 }, { m: 0.6, s: 60 }];
+      return [{ m: 1, s: 100 }];
+    };
     if (!b.sel3) b.sel3 = {};
+    if (!b.mult3) b.mult3 = {};
     ['inc', 'dec', 'keep'].forEach(function (c) {
       if (!b.sel3[c]) b.sel3[c] = TIERS3.map(function () { return ODS.map(function () { return true; }); });
+      if (!b.mult3[c]) b.mult3[c] = TIERS3.map(function () { return ODS.map(function () { return defMult(c).map(function (x) { return { m: x.m, s: x.s }; }); }); });
     });
     const cat = S.mcat;
     const grid = gridOf(cat);
-    const yi = function (v) { return (v / 1e8).toFixed(2) + ' 亿'; };
+    const yi = function (v) { return (Math.abs(v) / 1e8).toFixed(2) + ' 亿'; };
+    const cellAmt = function (c, i, j) {
+      const g = gridOf(c);
+      return b.mult3[c][i][j].reduce(function (a, br) { return a + g[i][j] * (br.s / 100) * BASE[i] * (br.m - 1); }, 0);
+    };
     const rows3 = TIERS3.map(function (t, i) {
       const cells = ODS.map(function (o, j) {
         const on = b.sel3[cat][i][j];
-        const amt = grid[i][j] * AMT[cat][i];
-        return '<td class="mcell' + (on ? '' : ' off') + '" data-msel="' + i + '-' + j + '"><div class="mcell-in"><button class="mtx-ck' + (on ? ' on' : '') + '"><span class="mk">' + (on ? '✓' : '') + '</span></button><div class="mc-v"><b>' + fmt(grid[i][j]) + '</b><span>' + (amt ? yi(amt) : '—') + '</span></div></div></td>';
+        const amt = cellAmt(cat, i, j);
+        return '<td class="mcell' + (on ? '' : ' off') + '" data-msel="' + i + '-' + j + '"><div class="mcell-in"><button class="mtx-ck' + (on ? ' on' : '') + '"><span class="mk">' + (on ? '✓' : '') + '</span></button><div class="mc-v"><b>' + fmt(grid[i][j]) + '</b><span>' + (amt ? (amt > 0 ? '+' : '−') + yi(amt) : '—') + '</span></div></div></td>';
       }).join('');
       const sum = ODS.reduce(function (a, o, j) { return a + (b.sel3[cat][i][j] ? grid[i][j] : 0); }, 0);
       return '<tr><td class="tl">' + t.n + '</td>' + cells + '<td class="r sum">' + fmt(sum) + '</td></tr>';
@@ -598,22 +609,30 @@
       return TIERS3.reduce(function (a, t, i) { return a + ODS.reduce(function (a2, o, j) { return a2 + (b.sel3[c][i][j] ? g[i][j] : 0); }, 0); }, 0);
     };
     const amtOf = function (c) {
-      const g = gridOf(c);
-      return TIERS3.reduce(function (a, t, i) { return a + ODS.reduce(function (a2, o, j) { return a2 + (b.sel3[c][i][j] ? g[i][j] * AMT[c][i] : 0); }, 0); }, 0);
+      return TIERS3.reduce(function (a, t, i) { return a + ODS.reduce(function (a2, o, j) { return a2 + (b.sel3[c][i][j] ? cellAmt(c, i, j) : 0); }, 0); }, 0);
     };
     const selInc = selOf('inc'), selDec = selOf('dec'), selKeep = selOf('keep');
     const catSel = cat === 'inc' ? selInc : cat === 'dec' ? selDec : selKeep;
-    const incAmt = amtOf('inc'), decAmt = amtOf('dec'), netAmt = incAmt - decAmt;
-    const matrix = '<div class="box matrix"><div class="box-head"><div><h3>结果加工 · 额度矩阵</h3><p class="sub">调额方向 × opportunity_od × history_tier；勾选即纳入该格，金额为每人实际调整额之和</p></div>' +
+    const incAmt = amtOf('inc'), decAmt = amtOf('dec'), netAmt = incAmt + decAmt;
+    const edit = S.editCell && S.editCell.indexOf(cat + ':') === 0 ? S.editCell.split(':')[1].split('-').map(Number) : null;
+    const editBrackets = edit ? b.mult3[cat][edit[0]][edit[1]] : [];
+    const shareSum = editBrackets.reduce(function (a, br) { return a + (+br.s || 0); }, 0);
+    const editor = edit ? '<div class="mult-edit"><div class="me-head">倍率配置 · ' + TIERS3[edit[0]].n + ' × ' + ODS[edit[1]] + '<span>该格 ' + fmt(grid[edit[0]][edit[1]]) + ' 人 · 基准额度 ' + fmt(BASE[edit[0]]) + '</span></div>' +
+      '<div class="me-rows">' + editBrackets.map(function (br, k) {
+        return '<div class="me-row"><span class="me-l">倍率</span><input class="me-in" type="number" step="0.1" min="0" value="' + br.m + '" data-mrow="' + k + '" data-mfield="m"><span class="me-x">×</span><span class="me-l">占比</span><input class="me-in" type="number" step="1" min="0" max="100" value="' + br.s + '" data-mrow="' + k + '" data-mfield="s"><span class="me-x">%</span><button class="me-del" data-mdel="' + k + '">×</button></div>';
+      }).join('') + '</div>' +
+      '<div class="me-foot"><span class="' + (shareSum === 100 ? '' : 'bad') + '">占比合计 ' + shareSum + '%</span><button class="lnk" data-madd>+ 添加档位</button><span class="sp"></span><button class="lnk" data-medone>完成</button></div>' +
+      '<div class="me-note">占比内按随机抽取，人数取整；金额 = 人数 × 占比 × 基准额度 × (倍率 − 1)</div></div>' : '';
+    const matrix = '<div class="box matrix"><div class="box-head"><div><h3>结果加工 · 额度矩阵</h3><p class="sub">调额方向 × opportunity_od × history_tier；点格子配置倍率与占比</p></div>' +
       '<div class="seg small"><button data-mcat="inc" class="' + (cat === 'inc' ? 'on' : '') + '">提额</button><button data-mcat="dec" class="' + (cat === 'dec' ? 'on' : '') + '">降额</button><button data-mcat="keep" class="' + (cat === 'keep' ? 'on' : '') + '">不变</button></div></div>' +
       '<div class="mtx-tools"><span>已选 <b>' + fmt(catSel) + '</b> / 共 <b>' + fmt(CAT[cat]) + '</b> 人</span><span class="sp"></span><button class="lnk" data-mall>全选</button><button class="lnk" data-mnone>清空</button></div>' +
       '<table class="mtx mtx3"><thead><tr><th>history_tier</th>' + ODS.map(function (o) { return '<th>' + o + '</th>'; }).join('') + '<th class="r">小计</th></tr></thead><tbody>' + rows3 +
       '<tr class="mtx-sum"><td class="tl">合计</td>' + colSum.map(function (n) { return '<td>' + fmt(n) + '</td>'; }).join('') + '<td class="r">' + fmt(catSel) + '</td></tr></tbody></table>' +
+      editor +
       '<div class="mtx-foot"><span>本次调整 <b>' + fmt(selInc) + '</b> 提额 · <b>' + fmt(selDec) + '</b> 降额 · <b>' + fmt(selKeep) + '</b> 不变</span>' +
-      '<span class="mtx-total">本次预计调额额度 <b>' + (netAmt >= 0 ? '+' : '−') + yi(Math.abs(netAmt)) + '</b><i>提额 +' + yi(incAmt) + ' · 降额 −' + yi(decAmt) + '</i></span></div></div>';
+      '<span class="mtx-total">本次预计调额额度 <b>' + (netAmt >= 0 ? '+' : '−') + yi(netAmt) + '</b><i>提额 +' + yi(incAmt) + ' · 降额 −' + yi(Math.abs(decAmt)) + '</i></span></div></div>';
 
-    const fullAmt = function (c) { const g = gridOf(c); return TIERS3.reduce(function (a, t, i) { return a + ODS.reduce(function (a2, o, j) { return a2 + g[i][j] * AMT[c][i]; }, 0); }, 0); };
-    const netAll = fullAmt('inc') - fullAmt('dec');
+    const netAll = incAmt + decAmt;
     $('#panelDetail').innerHTML = matrix + '<div class="push-grid" style="margin-top:14px"><div class="box"><div class="box-head"><div><h3>调额汇总</h3><p class="sub">' + b.id + ' · ' + s.label + ' ' + versionOf(cfg) + ' · ' + hhmm(totalMin(cfg)) + '</p></div></div>' +
       '<div class="big-split four"><div class="up"><i>提额</i><b>' + wan(inc) + '</b></div><div class="down"><i>降额</i><b>' + wan(dec) + '</b></div><div><i>维持</i><b>' + wan(keep) + '</b></div><div class="net"><i>净额度变化</i><b class="' + (netAll >= 0 ? 'up' : 'down') + '">' + (netAll >= 0 ? '+' : '−') + yi(Math.abs(netAll)) + '</b></div></div>' +
       '<table class="list" style="margin-top:8px"><thead><tr><th>方向</th><th>区间</th><th class="r">人数</th><th class="r">占比</th></tr></thead><tbody>' + buckets + '</tbody></table></div>' +
@@ -751,6 +770,12 @@
   /* ---------- events ---------- */
   function bind() {
     document.addEventListener('change', function (e) {
+      if (e.target.classList && e.target.classList.contains('me-in')) {
+        const bb = currentBatch(); const pt = S.editCell.split(':')[1].split('-').map(Number);
+        const k = +e.target.dataset.mrow, f = e.target.dataset.mfield;
+        bb.mult3[S.mcat][pt[0]][pt[1]][k][f] = +e.target.value;
+        renderApp(); return;
+      }
       if (!e.target.classList || !e.target.classList.contains('mtx-num')) return;
       const b = currentBatch(); if (!b || !b.alloc3) return;
       const parts = e.target.dataset.mnum.split('-');
@@ -771,6 +796,7 @@
       if (row) { openBatch(row.dataset.open); return; }
       const tab = e.target.closest('[data-tab]');
       if (tab && tab.dataset.tab === 'report') S.reportView = 'list';
+      if (tab) S.editCell = null;
       if (tab) { S.tab = tab.dataset.tab; renderApp(); return; }
       const launch = e.target.closest('[data-launch]');
       if (launch && !launch.disabled) {
@@ -784,8 +810,14 @@
       if (e.target.closest('[data-confirm-go]')) { S.confirmOpen = false; startRun(); return; }
       if (e.target.closest('[data-confirm-mask]') && !e.target.closest('.confirm')) { S.confirmOpen = false; renderApp(); return; }
       const stop = e.target.closest('[data-stop]'); if (stop) { stopRun(); return; }
+      const mck = e.target.closest('.mtx-ck');
+      if (mck) { const bb = currentBatch(); const td0 = mck.closest('[data-msel]'); const p2 = td0.dataset.msel.split('-'); const i = +p2[0], j = +p2[1]; bb.sel3[S.mcat][i][j] = !bb.sel3[S.mcat][i][j]; renderApp(); return; }
       const msel = e.target.closest('[data-msel]');
-      if (msel) { const bb = currentBatch(); const p2 = msel.dataset.msel.split('-'); const i = +p2[0], j = +p2[1]; bb.sel3[S.mcat][i][j] = !bb.sel3[S.mcat][i][j]; renderApp(); return; }
+      if (msel) { S.editCell = S.mcat + ':' + msel.dataset.msel; renderApp(); return; }
+      if (e.target.closest('[data-medone]')) { S.editCell = null; renderApp(); return; }
+      if (e.target.closest('[data-madd]')) { const bb = currentBatch(); const pt = S.editCell.split(':')[1].split('-').map(Number); bb.mult3[S.mcat][pt[0]][pt[1]].push({ m: 1, s: 0 }); renderApp(); return; }
+      const mdel = e.target.closest('[data-mdel]');
+      if (mdel) { const bb = currentBatch(); const pt = S.editCell.split(':')[1].split('-').map(Number); bb.mult3[S.mcat][pt[0]][pt[1]].splice(+mdel.dataset.mdel, 1); renderApp(); return; }
       if (e.target.closest('[data-mall]')) { const bb = currentBatch(); bb.sel3[S.mcat] = bb.sel3[S.mcat].map(function (r) { return r.map(function () { return true; }); }); renderApp(); return; }
       if (e.target.closest('[data-mnone]')) { const bb = currentBatch(); bb.sel3[S.mcat] = bb.sel3[S.mcat].map(function (r) { return r.map(function () { return false; }); }); renderApp(); return; }
       const ne = e.target.closest('[data-nevent]');
