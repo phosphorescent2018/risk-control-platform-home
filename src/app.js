@@ -132,7 +132,7 @@
     const cfg = b.config, s = STRATEGIES[cfg.strategy];
     const groups = s.groups.filter((g) => cfg.groups.includes(g.id)).map((g) => g.name).join('、');
     const st = batchState(b);
-    return '<div class="ws-back-row"><button class="back" data-back>‹ 跑批记录</button></div>' +
+    return '<div class="ws-back-row"><button class="back" data-back><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg>跑批记录</button></div>' +
       '<div class="ws-top"><div class="ws-left"><div class="ws-h1">' + (b.name || b.id) + '</div><span class="badge ' + st.c + '">' + st.t + '</span></div>' +
       '<div class="ws-right"><div class="slice-chip"><span>切片日</span><b>' + (cfg.sliceDate || s.sliceDate) + '</b><i>' + (cfg.sliceTime || s.sliceTime) + '</i></div></div></div>' +
       '<div class="ws-meta">' + b.id + ' · ' + s.label + ' ' + versionOf(cfg) + ' · ' + groups + ' · ' + b.started + (b.ended ? ' → ' + b.ended : '') + '</div>';

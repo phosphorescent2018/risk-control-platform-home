@@ -558,3 +558,8 @@ button.gitem { cursor:pointer; text-align:left; }
 .cf-row b { font-weight:500; color:var(--ink); }
 .cf-note { margin:6px 20px 0; padding:8px 10px; background:#FFF8EC; border:1px solid #F7E3BF; border-radius:8px; font-size:10px; color:#96651A; }
 .cf-foot { display:flex; justify-content:flex-end; gap:8px; padding:14px 20px 16px; }
+
+.back { display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 12px 0 9px; border:1px solid var(--line); border-radius:8px; background:#fff; font:inherit; font-size:11.5px; font-weight:500; color:var(--ink); cursor:pointer; transition:border-color .15s ease, color .15s ease, background .15s ease; }
+.back:hover { border-color:#C7D7F2; color:var(--blue-deep); background:#F8FBFF; }
+.back svg { width:13px; height:13px; color:#8A96AB; }
+.back:hover svg { color:var(--blue-deep); }
