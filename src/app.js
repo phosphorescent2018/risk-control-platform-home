@@ -65,7 +65,7 @@
   };
 
   const S = {
-    view: 'create', tab: 'run', batchId: null,
+    view: 'list', tab: 'run', batchId: null,
     strategy: 'credit_offline', business: 'MTN_Uganda', version: 'v20', versionType: 'FORMAL', batchName: '', desc: '',
     groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, sliceDate: '', scheduleMode: 'now', scheduleAt: '', scheduleRepeat: 'none', reportView: 'list', reports: [], rptCompare: {}, webhook: '', notifyEvents: [], confirmOpen: false, groupOpen: false, groupUp: false, pushArm: false, mcat: 'inc',
     pickerDraft: [], pickerSearch: '', running: false, pct: 0, timer: null, lastShard: -1
@@ -130,11 +130,12 @@
 
   function renderHead() {
     if (S.view === 'list') {
-      return '<div class="ws-top"><div class="ws-left"><div class="ws-h1">跑批记录</div></div></div>';
+      return '<div class="ws-top"><div class="ws-left"><div class="ws-h1">跑批作业处理</div></div></div>';
     }
     if (S.view === 'create') {
       const s = cur();
-      return '<div class="ws-top"><div class="ws-left"><div class="ws-h1">跑批发起</div></div>' +
+      return '<div class="ws-back-row"><button class="back" data-back-list><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg>跑批作业处理</button></div>' +
+      '<div class="ws-top"><div class="ws-left"><div class="ws-h1">发起跑批</div></div>' +
         '<div class="ws-right"><div class="slice-chip"><span>切片日</span><b>' + (S.sliceDate || s.sliceDate) + '</b><i>' + s.sliceTime + '</i></div></div></div>';
     }
     const b = currentBatch(); if (!b) return '';
@@ -177,7 +178,7 @@
         '<td><span class="tag ' + ps.c + '">' + ps.t + '</span></td>' +
         '</tr>';
     }).join('');
-    $('#panelList').innerHTML = '<div class="list-head"><h3>跑批记录</h3></div>' + '<table class="batch-table"><thead><tr><th>批次名称</th><th>批次号</th><th>策略</th><th>切片日</th><th class="r">人数</th><th>状态</th><th class="r">耗时</th><th>推送</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    $('#panelList').innerHTML = renderReadiness() + '<div class="box" style="margin-top:14px"><div class="box-head"><div><h3>批次列表</h3><p class="sub">共 ' + BATCHES.length + ' 个批次 · 点击任意一行查看进度与报告</p></div><button class="btn primary" data-new>发起跑批</button></div>' + '<table class="batch-table"><thead><tr><th>批次名称</th><th>批次号</th><th>策略</th><th>切片日</th><th class="r">人数</th><th>状态</th><th class="r">耗时</th><th>推送</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
 
   /* ---------- create ---------- */
@@ -342,7 +343,7 @@
   }
 
   function renderCreate() {
-    $('#panelCreate').innerHTML = renderReadiness() + '<div style="margin-top:14px">' + renderConfigForm() + '</div>';
+    $('#panelCreate').innerHTML = renderConfigForm();
   }
 
   /* ---------- group picker ---------- */
@@ -691,7 +692,7 @@
     const pw = document.querySelector('.panel-wrap');
     const sameCtx = S.view === lastView;
     const keepY = pw ? pw.scrollTop : 0;
-    $$('.subnav-item').forEach((el) => el.classList.toggle('on', el.dataset.nav === (S.view === 'create' ? 'create' : 'list')));
+    $$('.subnav-item').forEach((el) => el.classList.toggle('on', true));
     $('#wsHead').innerHTML = '<div class="ws-head">' + renderHead() + '</div>';
     $('#stages').hidden = S.view !== 'detail';
     $$('.panel').forEach((el) => { el.classList.remove('active'); });
@@ -895,6 +896,8 @@
       if (e.target.closest('[data-gdone]')) { S.groupOpen = false; renderApp(); return; }
       if (e.target.closest('[data-gclear]')) { S.groups = []; renderApp(); return; }
       if (S.groupOpen && !e.target.closest('.gsel')) { S.groupOpen = false; renderApp(); return; }
+      if (e.target.closest('[data-new]')) { S.view = 'create'; renderApp(); return; }
+      if (e.target.closest('[data-back-list]')) { S.view = 'list'; renderApp(); return; }
       if (e.target.closest('[data-report-open]')) { S.reportView = 'event'; renderApp(); return; }
       if (e.target.closest('[data-report-back]')) { S.reportView = 'list'; renderApp(); return; }
       if (e.target.closest('[data-report-soon]')) { toast('该报告模板待接入（' + e.target.closest('[data-report-soon]').dataset.reportSoon + '）'); return; }
