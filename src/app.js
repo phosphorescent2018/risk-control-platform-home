@@ -92,11 +92,11 @@
   const cur = () => STRATEGIES[S.strategy];
   const currentBatch = () => BATCHES.find((b) => b.id === S.batchId) || null;
   const REPORT_DEFS = [
-    { code: 'PRE_LOAN_OPERATION_REPORT', name: '贷前运营跑批报告', desc: '钱包漏斗 · 授信额度区间 · 规则占比 · 模型 PSI', blocks: 9, scenes: ['PRE_LOAN'] },
-    { code: 'IN_LOAN_LIMIT_MIGRATION_REPORT', name: '贷中额度迁移报告', desc: '二维额度迁移矩阵 · 调整前后分布 · 降为 0 原因', blocks: 7, scenes: ['IN_LOAN'] },
-    { code: 'IN_LOAN_MODEL_STABILITY_REPORT', name: '模型稳定性与入模变量报告', desc: 'A/B/F 模型稳定性 · PSI 监控 · Top10 变量 CSI', blocks: 5, scenes: ['PRE_LOAN', 'IN_LOAN'] },
-    { code: 'IN_LOAN_FULL_POPULATION_LIMIT_REPORT', name: '全量客群期次额度报告', desc: '新旧 Profiling 额度分布矩阵 · 本次/上次迁移矩阵', blocks: 4, scenes: ['IN_LOAN'] },
-    { code: 'IN_LOAN_FULL_POPULATION_FINAL_LIMIT_REPORT', name: '全量客群期次额度报告（Final Limit）', desc: 'Final Limit 版本 · 额度分布矩阵 · 迁移矩阵', blocks: 4, scenes: ['IN_LOAN'] }
+    { code: 'PRE_LOAN_OPERATION_REPORT', name: 'Pre-loan Operation Batch Report', desc: '钱包漏斗 · 授信额度区间 · 规则占比 · 模型 PSI', blocks: 9, scenes: ['PRE_LOAN'] },
+    { code: 'IN_LOAN_LIMIT_MIGRATION_REPORT', name: 'In-loan Credit Limit Migration Report', desc: '二维额度迁移矩阵 · 调整前后分布 · 降为 0 原因', blocks: 7, scenes: ['IN_LOAN'] },
+    { code: 'IN_LOAN_MODEL_STABILITY_REPORT', name: 'Model Stability and Feature Report', desc: 'A/B/F 模型稳定性 · PSI 监控 · Top10 变量 CSI', blocks: 5, scenes: ['PRE_LOAN', 'IN_LOAN'] },
+    { code: 'IN_LOAN_FULL_POPULATION_LIMIT_REPORT', name: 'Full-population Credit Limit Report', desc: '新旧 Profiling 额度分布矩阵 · 本次/上次迁移矩阵', blocks: 4, scenes: ['IN_LOAN'] },
+    { code: 'IN_LOAN_FULL_POPULATION_FINAL_LIMIT_REPORT', name: 'Full-population Final Limit Report', desc: 'Final Limit 版本 · 额度分布矩阵 · 迁移矩阵', blocks: 4, scenes: ['IN_LOAN'] }
   ];
 
   const versionOf = (cfg) => { const s = STRATEGIES[cfg.strategy]; return cfg.version || (cfg.versionType === 'FORMAL' ? s.official : s.beta); };
