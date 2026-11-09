@@ -706,10 +706,10 @@
     renderApp();
     if (S.timer) clearInterval(S.timer);
     S.timer = setInterval(function () {
-      S.pct = Math.min(1, S.pct + 0.012 + Math.random() * 0.008);
+      S.pct = Math.min(1, S.pct + 0.04 + Math.random() * 0.012);
       updateRunLive();
       if (S.pct >= 1) finishRun();
-    }, 220);
+    }, 200);
     S.batchName = ''; S.desc = '';
     toast('跑批已发起：' + b.name);
   }
