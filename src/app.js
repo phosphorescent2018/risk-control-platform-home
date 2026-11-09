@@ -71,19 +71,22 @@
     pickerDraft: [], pickerSearch: '', running: false, pct: 0, timer: null, lastShard: -1
   };
 
-  function cfgOf(strategy, groups) {
+  function cfgOf(strategy, groups, day) {
     const s = STRATEGIES[strategy];
     const gs = s.groups.filter((g) => groups.includes(g.id));
     const crowd = gs.reduce((a, g) => a + g.crowd, 0);
-    return { strategy, versionType: 'FORMAL', groups: groups.slice(), crowd, runMin: Math.max(1, Math.round(crowd / (s.speed * 10000) * 60)), shards: Math.ceil(crowd / 4000) };
+    return {
+      strategy, version: s.official, versionType: 'FORMAL', sliceDate: day || s.sliceDate, sliceTime: s.sliceTime,
+      groups: groups.slice(), crowd, runMin: Math.max(1, Math.round(crowd / (s.speed * 10000) * 60)), shards: Math.ceil(crowd / 4000)
+    };
   }
 
   const BATCHES = [
-    { retries: 12, id: '459_20261028091106', name: '贷前-1028', status: 'completed', started: '2026-10-28 09:11:06', ended: '2026-10-29 04:26:20', config: cfgOf('credit_offline', ['wallet_active']), pushStep: 1, pushBatch: null, pushedAt: null },
-    { retries: 3, id: '460_20261027085645', name: '贷中-1027', status: 'completed', started: '2026-10-27 08:56:45', ended: '2026-10-27 12:18:00', config: cfgOf('Dai_Zhong', ['loan_in']), pushStep: 1, pushBatch: null, pushedAt: null },
-    { retries: 3, id: '458_20261016072310', name: '贷前-1016', status: 'completed', started: '2026-10-16 07:23:10', ended: '2026-10-17 02:15:40', config: cfgOf('credit_offline', ['wallet_active']), pushStep: 5, pushBatch: 'D20261016-01', pushedAt: '2026-10-17 09:12:00' },
-    { retries: 0, id: '455_20261018082130', name: '贷中-1018', status: 'completed', started: '2026-10-18 08:21:30', ended: '2026-10-18 11:27:30', config: cfgOf('Dai_Zhong', ['loan_in']), pushStep: 5, pushBatch: 'D20261018-01', pushedAt: '2026-10-18 15:40:00' },
-    { retries: 1, id: '457_20261005064520', name: '贷前-1005', status: 'completed', started: '2026-10-05 06:45:20', ended: '2026-10-06 02:51:20', config: cfgOf('credit_offline', ['wallet_active']), pushStep: 5, pushBatch: 'D20261005-01', pushedAt: '2026-10-06 10:20:00' }
+    { retries: 12, id: '459_20261028091106', name: '贷前-1028', status: 'completed', started: '2026-10-28 09:11:06', ended: '2026-10-29 04:26:20', config: cfgOf('credit_offline', ['wallet_active'], '2026-10-27'), pushStep: 1, pushBatch: null, pushedAt: null },
+    { retries: 3, id: '460_20261027085645', name: '贷中-1027', status: 'completed', started: '2026-10-27 08:56:45', ended: '2026-10-27 12:18:00', config: cfgOf('Dai_Zhong', ['loan_in'], '2026-10-26'), pushStep: 1, pushBatch: null, pushedAt: null },
+    { retries: 3, id: '458_20261016072310', name: '贷前-1016', status: 'completed', started: '2026-10-16 07:23:10', ended: '2026-10-17 02:15:40', config: cfgOf('credit_offline', ['wallet_active'], '2026-10-15'), pushStep: 5, pushBatch: 'D20261016-01', pushedAt: '2026-10-17 09:12:00' },
+    { retries: 0, id: '455_20261018082130', name: '贷中-1018', status: 'completed', started: '2026-10-18 08:21:30', ended: '2026-10-18 11:27:30', config: cfgOf('Dai_Zhong', ['loan_in'], '2026-10-17'), pushStep: 5, pushBatch: 'D20261018-01', pushedAt: '2026-10-18 15:40:00' },
+    { retries: 1, id: '457_20261005064520', name: '贷前-1005', status: 'completed', started: '2026-10-05 06:45:20', ended: '2026-10-06 02:51:20', config: cfgOf('credit_offline', ['wallet_active'], '2026-10-04'), pushStep: 5, pushBatch: 'D20261005-01', pushedAt: '2026-10-06 10:20:00' }
   ];
 
   const cur = () => STRATEGIES[S.strategy];
@@ -96,7 +99,7 @@
     const groups = s.groups.filter((g) => S.groups.includes(g.id));
     const crowd = groups.reduce((a, g) => a + g.crowd, 0);
     return {
-      strategy: S.strategy, business: S.business, version: S.version, versionType: S.versionType, groups: groups.map((g) => g.id),
+      strategy: S.strategy, business: S.business, version: S.version, versionType: S.versionType, groups: groups.map((g) => g.id), sliceDate: s.sliceDate, sliceTime: s.sliceTime,
       crowd, runMin: crowd ? Math.max(1, Math.round(crowd / (s.speed * 10000) * 60)) : 0,
       shards: Math.ceil(crowd / 4000)
     };
@@ -131,7 +134,7 @@
     const st = batchState(b);
     return '<div class="ws-back-row"><button class="back" data-back>‹ 跑批记录</button></div>' +
       '<div class="ws-top"><div class="ws-left"><div class="ws-h1">' + (b.name || b.id) + '</div><span class="badge ' + st.c + '">' + st.t + '</span></div>' +
-      '<div class="ws-right"><div class="slice-chip"><span>切片日</span><b>' + s.sliceDate + '</b><i>' + s.sliceTime + '</i></div></div></div>' +
+      '<div class="ws-right"><div class="slice-chip"><span>切片日</span><b>' + (cfg.sliceDate || s.sliceDate) + '</b><i>' + (cfg.sliceTime || s.sliceTime) + '</i></div></div></div>' +
       '<div class="ws-meta">' + b.id + ' · ' + s.label + ' ' + versionOf(cfg) + ' · ' + groups + ' · ' + b.started + (b.ended ? ' → ' + b.ended : '') + '</div>';
   }
 
@@ -158,7 +161,7 @@
         '<td class="nm">' + (b.name || b.id) + '</td>' +
         '<td class="mono">' + b.id + '</td>' +
         '<td>' + s.label + ' ' + versionOf(b.config) + '</td>' +
-        '<td>' + s.sliceDate.slice(5) + '</td>' +
+        '<td>' + (b.config.sliceDate || s.sliceDate).slice(5) + '</td>' +
         '<td class="r">' + wan(b.config.crowd) + '</td>' +
         '<td><span class="tag ' + (st.c === 'running' ? 'info' : st.c === '' && st.t === '已停止' ? 'na' : 'ok') + '">' + st.t + '</span></td>' +
         '<td class="r">' + dur + '</td>' +
@@ -237,7 +240,7 @@
       '</div>' +
       '<div class="grid3">' +
         field('策略版本<i class="req">*</i>', sel('verSel', verOpts)) +
-        field('批次名称<i class="req">*</i>', '<input class="input" id="batchName" placeholder="例如：贷前-1105" value="' + (S.batchName || '').replace(/"/g, '&quot;') + '">') +
+        field('批次名称<i class="req">*</i>', '<input class="input" id="batchName" placeholder="例如：贷前-' + dateISO(new Date()).slice(5).replace('-', '') + '" value="' + (S.batchName || '').replace(/"/g, '&quot;') + '">') +
         field('描述', '<input class="input" id="batchDesc" placeholder="可选，一句话说明" value="' + (S.desc || '').replace(/"/g, '&quot;') + '">') +
       '</div>' +
       '<div class="field" style="margin-top:14px"><label>客户分组<i class="req">*</i></label>' +
@@ -704,7 +707,12 @@
     tick(); setInterval(tick, 1000);
   }
 
-  function init() { bind(); renderApp(); clock(); }
+  function init() {
+    const sliceDay = dateISO(addDays(new Date(), -2));
+    Object.values(STRATEGIES).forEach((x) => { x.sliceDate = sliceDay; });
+    S.selDay = STRATEGIES[S.strategy].sliceDate;
+    bind(); renderApp(); clock();
+  }
 
   init();
 })();
