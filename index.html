@@ -513,6 +513,11 @@ button.gitem { cursor:pointer; text-align:left; }
 .cd-meta { display:flex; align-items:center; justify-content:space-between; margin-top:6px; font-size:10px; }
 .cd-meta .dl { font-style:normal; color:var(--muted); font-variant-numeric:tabular-nums; }
 
+.cal { grid-template-columns:repeat(12,minmax(0,1fr)); }
+.cal-col.pending { background:#FAFBFD; border-color:#F1F3F8; }
+.cal-col.pending .cal-d { color:#B7BFCB; }
+.cal-bars i.na { background:#E9EDF3; }
+
 </style>
 </head>
 <body>
@@ -761,26 +766,37 @@ button.gitem { cursor:pointer; text-align:left; }
 
   /* ---------- create ---------- */
   function dayStatus(s, dayISO) {
-    const idx = Math.round((parseISO(dayISO) - parseISO(s.sliceDate)) / 86400000) + 13;
-    if (idx < 0 || idx > 13) return null;
-    return { wallet: s.days[idx], od: s.odDays[idx], pool: 0 };
+    const diff = Math.round((parseISO(dayISO) - parseISO(s.sliceDate)) / 86400000);
+    if (diff > 0) return { pending: true };
+    const bad = diff === -9 || diff === -8 || diff === -7;
+    return { wallet: 0, od: bad ? 2 : 0, pool: 0, pending: false };
   }
 
   function renderCalendar() {
     const s = cur();
-    const start = addDays(parseISO(s.sliceDate), -13);
+    const endD = parseISO(S.todayISO || s.sliceDate);
+    const startD = addDays(endD, -11);
     let cols = '';
-    for (let i = 0; i < 14; i++) {
-      const dt = addDays(start, i), iso = dateISO(dt), st = dayStatus(s, iso) || dayStatus(s, s.sliceDate);
-      const bars = [st.wallet, st.od, st.pool].map((v) => '<i class="' + (v === 2 ? 'bad' : 'ok') + '"></i>').join('');
-      cols += '<div class="cal-col ' + (iso === S.selDay ? 'sel' : '') + '" data-day="' + iso + '"><div class="cal-d">' + iso.slice(8) + '</div><div class="cal-bars">' + bars + '</div></div>';
+    for (let i = 0; i < 12; i++) {
+      const dt = addDays(startD, i), iso = dateISO(dt), st = dayStatus(s, iso);
+      const bars = st.pending
+        ? '<i class="na"></i><i class="na"></i><i class="na"></i>'
+        : [st.wallet, st.od, st.pool].map((v) => '<i class="' + (v === 2 ? 'bad' : 'ok') + '"></i>').join('');
+      cols += '<div class="cal-col' + (st.pending ? ' pending' : '') + (iso === S.selDay ? ' sel' : '') + '" data-day="' + iso + '"><div class="cal-d">' + iso.slice(8) + '</div><div class="cal-bars">' + bars + '</div></div>';
     }
     return cols;
   }
 
   function renderCalDetail() {
     const s = cur();
-    const day = S.selDay || s.sliceDate, st = dayStatus(s, day) || dayStatus(s, s.sliceDate);
+    const day = S.selDay || s.sliceDate, st = dayStatus(s, day);
+    if (st.pending) {
+      const eta = dateISO(addDays(parseISO(day), 2));
+      return '<div class="cd-head"><b>' + day + '</b><span>数据未出</span><span>·</span><span>T+2，预计 ' + eta + ' 产出</span></div>' +
+        '<div class="cd-grid"><div class="cd-card"><span class="cd-name">钱包变量表</span><b class="dim">—</b><span class="cd-meta"><i class="dl">—</i><span class="tag na">待出数</span></span></div>' +
+        '<div class="cd-card"><span class="cd-name">OD 变量表</span><b class="dim">—</b><span class="cd-meta"><i class="dl">—</i><span class="tag na">待出数</span></span></div>' +
+        '<div class="cd-card"><span class="cd-name">圈选池</span><b class="dim">—</b><span class="cd-meta"><i class="dl">—</i><span class="tag na">待出数</span></span></div></div>';
+    }
     const names = ['钱包变量表', 'OD 变量表', '圈选池'], keys = ['wallet', 'od', 'pool'];
     const cards = names.map((nm, i) => {
       const v = st[keys[i]], base = s.medians[i];
@@ -854,8 +870,8 @@ button.gitem { cursor:pointer; text-align:left; }
     const st = dayStatus(s, day) || dayStatus(s, s.sliceDate);
     const ok = [st.wallet, st.od, st.pool].filter((v) => v === 0).length;
     const cal = S.calOpen
-      ? '<div class="ready-body"><div class="cal-head"><span>' + md(dateISO(addDays(parseISO(day), -13))) + ' → ' + md(day) + '</span>' +
-        '<div class="legend"><span><b style="background:#5BC08D"></b>就绪</span><span><b style="background:#E06B6B"></b>缺数</span></div></div>' +
+      ? '<div class="ready-body"><div class="cal-head"><span>' + md(dateISO(addDays(parseISO(S.todayISO || day), -11))) + ' → ' + md(S.todayISO || day) + '</span>' +
+        '<div class="legend"><span><b style="background:#5BC08D"></b>就绪</span><span><b style="background:#E06B6B"></b>缺数</span><span><b style="background:#C9D0DC"></b>待出数</span></div></div>' +
         '<div class="cal">' + renderCalendar() + '</div><div class="cal-detail">' + renderCalDetail() + '</div></div>'
       : '';
     return '<section class="box readiness"><div class="ready-row"><span class="ready-dot"></span><b>切片已就绪</b>' +
@@ -1316,6 +1332,7 @@ button.gitem { cursor:pointer; text-align:left; }
   function init() {
     const sliceDay = dateISO(addDays(new Date(), -2));
     Object.values(STRATEGIES).forEach((x) => { x.sliceDate = sliceDay; });
+    S.todayISO = dateISO(new Date());
     S.selDay = STRATEGIES[S.strategy].sliceDate;
     bind(); renderApp(); clock();
   }

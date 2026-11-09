@@ -505,3 +505,8 @@ button.gitem { cursor:pointer; text-align:left; }
 .cd-card b.dim { color:#C2C9D6; }
 .cd-meta { display:flex; align-items:center; justify-content:space-between; margin-top:6px; font-size:10px; }
 .cd-meta .dl { font-style:normal; color:var(--muted); font-variant-numeric:tabular-nums; }
+
+.cal { grid-template-columns:repeat(12,minmax(0,1fr)); }
+.cal-col.pending { background:#FAFBFD; border-color:#F1F3F8; }
+.cal-col.pending .cal-d { color:#B7BFCB; }
+.cal-bars i.na { background:#E9EDF3; }
