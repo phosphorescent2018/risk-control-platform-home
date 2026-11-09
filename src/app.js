@@ -67,7 +67,7 @@
   const S = {
     view: 'list', tab: 'run', batchId: null,
     strategy: 'credit_offline', business: 'MTN_Uganda', version: 'v20', versionType: 'FORMAL', batchName: '', desc: '',
-    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, pushArm: false, mcat: 'inc',
+    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, groupOpen: false, groupUp: false, pushArm: false, mcat: 'inc',
     pickerDraft: [], pickerSearch: '', running: false, pct: 0, timer: null, lastShard: -1
   };
 
@@ -217,18 +217,13 @@
       (s.beta ? '<option value="BETA"' + (S.versionType === 'BETA' ? ' selected' : '') + '>Test</option>' : '');
     const verOpts = versions.map((v) => '<option value="' + v + '"' + (v === S.version ? ' selected' : '') + '>' + v + '</option>').join('');
     const person = '<svg class="gicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.6-3.2 2.8-4.9 5.5-4.9s4.9 1.7 5.5 4.9"/><path d="M15.8 6.2a2.8 2.8 0 010 5.4"/><path d="M17.6 19c-.2-1.6-.7-2.9-1.4-3.8 2.2.2 3.8 1.7 4.3 3.8"/></svg>';
-    const selCards = s.groups.filter((g) => S.groups.includes(g.id)).map((g) =>
-      '<div class="gcard"><i class="gx" data-remove-group="' + g.id + '">×</i>' +
-      '<div class="gc-row"><span class="k">分组名称</span><span class="v">' + g.name + '</span></div>' +
-      '<div class="gc-row"><span class="k">客户数</span><span class="v">' + fmt(g.crowd) + '</span></div>' +
-      '<div class="gc-row"><span class="k">更新时间</span><span class="v">' + g.updated + '</span></div>' +
-      '<div class="gc-row"><span class="k">筛选条件</span><span class="v mono" title="' + g.desc + '">' + g.desc + '</span></div>' +
-      '</div>'
-    ).join('') || '<div class="gp-empty">从左侧选择客户分组</div>';
+    const selChips = s.groups.filter((g) => S.groups.includes(g.id)).map((g) =>
+      '<span class="gchip" title="' + g.updated + ' · ' + g.desc + '"><b>' + g.name + '</b><span class="n">' + fmt(g.crowd) + '</span><i class="x" data-gremove="' + g.id + '">×</i></span>'
+    ).join('');
     const q = (S.gsearch || '').trim().toLowerCase();
     const listRows = s.groups.filter((g) => !q || g.name.toLowerCase().includes(q)).map((g) => {
       const on = S.groups.includes(g.id);
-      return '<button class="gitem ' + (on ? 'sel' : '') + '" data-gtoggle="' + g.id + '">' + person + '<span class="nm">' + g.name + '</span><span class="gnum">' + fmt(g.crowd) + '</span>' + (on ? '<svg class="gchk" viewBox="0 0 10 10" fill="none"><path d="M2 5.2l2 2 4-4.4" stroke="#5095FF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '') + '</button>';
+      return '<button class="gopt ' + (on ? 'on' : '') + '" data-gtoggle="' + g.id + '" title="' + g.updated + ' · ' + g.desc + '"><span class="box"></span><span class="nm">' + g.name + '</span><span class="num">' + fmt(g.crowd) + '</span></button>';
     }).join('') || '<div class="gp-empty">没有匹配的分组</div>';
     const field = (label, inner, cls) => '<div class="field ' + (cls || '') + '"><label>' + label + '</label>' + inner + '</div>';
     return '<section class="box form-box">' +
@@ -244,11 +239,18 @@
         field('描述', '<input class="input" id="batchDesc" placeholder="可选，一句话说明" value="' + (S.desc || '').replace(/"/g, '&quot;') + '">') +
       '</div>' +
       '<div class="field" style="margin-top:14px"><label>客户分组<i class="req">*</i></label>' +
-        '<div class="gp-wrap">' +
-          '<div class="gp-left"><div class="gp-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.2"/><path d="M16 16l4.5 4.5" stroke-linecap="round"/></svg><input id="gSearch" placeholder="搜索分组名称" value="' + (S.gsearch || '').replace(/"/g, '&quot;') + '"></div><div class="glist">' + listRows + '</div></div>' +
-          '<div class="gp-right"><div class="gp-res-title">已选分组（' + cfg.groups.length + '）</div><div class="glist">' + selCards + '</div></div>' +
+        '<div class="gsel">' +
+          '<button class="gsel-box' + (S.groupOpen ? ' open' : '') + '" data-gopen>' +
+            '<div class="gchips">' + (selChips || '<span class="gsel-ph">选择客户分组</span>') + '</div>' +
+            '<svg class="gsel-chev" viewBox="0 0 10 6" fill="none" style="transform:translateY(-50%) rotate(' + (S.groupOpen ? 180 : 0) + 'deg)"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+          '</button>' +
+          (S.groupOpen ? '<div class="gpop' + (S.groupUp ? ' up' : '') + '">' +
+            '<div class="gp-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.2"/><path d="M16 16l4.5 4.5" stroke-linecap="round"/></svg><input id="gSearch" placeholder="搜索分组名称" value="' + (S.gsearch || '').replace(/"/g, '&quot;') + '"></div>' +
+            '<div class="gpop-list">' + listRows + '</div>' +
+            '<div class="gpop-foot"><span>已选 ' + cfg.groups.length + ' 个 · 合计 ' + fmt(cfg.crowd) + ' 人</span><span class="sp"></span><button data-gclear>清空</button><button data-gdone>完成</button></div>' +
+          '</div>' : '') +
         '</div>' +
-        '<div class="gp-foot"><span>合计 <b>' + fmt(cfg.crowd) + '</b> 位客户</span><button class="gp-reset" data-greset>重置</button></div>' +
+        '<div class="gsel-hint">已选 <b>' + cfg.groups.length + '</b> 个分组 · 合计 <b>' + fmt(cfg.crowd) + '</b> 位客户</div>' +
       '</div>' +
       '<div class="form-foot split"><div class="run-sum"><span>预计 <b>' + wan(cfg.crowd) + '</b> 人</span><i>·</i><span><b>' + fmt(cfg.shards) + '</b> 分片</span><i>·</i><span>约 <b>' + hhmm(cfg.runMin) + '</b></span></div>' +
         (cfg.groups.length ? '' : '<span class="foot-hint">请选择至少一个客户分组</span>') +
@@ -632,6 +634,7 @@
 
   /* ---------- events ---------- */
   function bind() {
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && S.groupOpen) { S.groupOpen = false; renderApp(); } });
     document.addEventListener('click', function (e) {
       const nav = e.target.closest('[data-nav]');
       if (nav) { if (nav.dataset.nav === 'create') { S.batchName = ''; S.desc = ''; S.view = 'create'; } else { S.view = 'list'; } renderApp(); return; }
@@ -643,7 +646,20 @@
       if (tab) { S.tab = tab.dataset.tab; renderApp(); return; }
       const launch = e.target.closest('[data-launch]'); if (launch && !launch.disabled) { startRun(); return; }
       const stop = e.target.closest('[data-stop]'); if (stop) { stopRun(); return; }
-      if (e.target.closest('[data-greset]')) { S.groups = []; renderApp(); return; }
+      const gt = e.target.closest('[data-gtoggle]');
+      if (gt) { const id = gt.dataset.gtoggle; if (S.groups.includes(id)) { S.groups = S.groups.filter((x) => x !== id); } else { S.groups.push(id); } renderApp(); return; }
+      const grem = e.target.closest('[data-gremove]');
+      if (grem) { S.groups = S.groups.filter((x) => x !== grem.dataset.gremove); renderApp(); return; }
+      if (e.target.closest('[data-gopen]')) {
+        if (!S.groupOpen) {
+          const box = document.querySelector('.gsel-box');
+          S.groupUp = box ? box.getBoundingClientRect().bottom > window.innerHeight * 0.62 : false;
+        }
+        S.groupOpen = !S.groupOpen; renderApp(); return;
+      }
+      if (e.target.closest('[data-gdone]')) { S.groupOpen = false; renderApp(); return; }
+      if (e.target.closest('[data-gclear]')) { S.groups = []; renderApp(); return; }
+      if (S.groupOpen && !e.target.closest('.gsel')) { S.groupOpen = false; renderApp(); return; }
       const mcat = e.target.closest('[data-mcat]');
       if (mcat) { S.mcat = mcat.dataset.mcat; renderApp(); return; }
       const mcell = e.target.closest('[data-mcell]');

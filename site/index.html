@@ -468,6 +468,36 @@ button.gitem { cursor:pointer; text-align:left; }
 .run-sum b { color:var(--ink); font-variant-numeric:tabular-nums; }
 .run-sum i { font-style:normal; color:#D5DAE4; }
 
+.gsel { position:relative; }
+.gsel-box { display:flex; align-items:center; gap:8px; width:100%; min-height:36px; border:1px solid var(--line); border-radius:8px; background:#fff; padding:5px 30px 5px 8px; cursor:pointer; font:inherit; text-align:left; }
+.gsel-box:hover { border-color:#C7D7F2; }
+.gsel-box.open { border-color:#BCD2F7; box-shadow:0 0 0 3px rgba(80,149,255,.12); }
+.gchips { display:flex; flex-wrap:wrap; gap:6px; }
+.gchip { display:inline-flex; align-items:center; gap:6px; background:#EFF5FF; border:1px solid #DCE8FC; border-radius:6px; padding:3px 7px; font-size:10.5px; color:#2E5FAE; }
+.gchip b { font-weight:500; color:var(--ink); }
+.gchip .n { color:#7C8CA8; font-variant-numeric:tabular-nums; }
+.gchip .x { font-style:normal; color:#8AA0C4; cursor:pointer; }
+.gchip .x:hover { color:var(--red); }
+.gsel-ph { font-size:11.5px; color:#A6AFBF; padding-left:2px; }
+.gsel-chev { position:absolute; right:11px; top:50%; width:10px; height:6px; color:#9AA1B6; pointer-events:none; }
+.gsel-hint { margin-top:6px; font-size:10px; color:var(--muted); }
+.gsel-hint b { color:var(--ink); font-variant-numeric:tabular-nums; }
+.gpop { position:absolute; left:0; right:0; top:calc(100% + 6px); background:#fff; border:1px solid #E6E9F0; border-radius:10px; box-shadow:0 12px 32px rgba(20,40,80,.14); z-index:30; padding:10px; }
+.gpop-list { max-height:230px; overflow:auto; display:flex; flex-direction:column; gap:2px; margin-top:8px; }
+.gopt { display:flex; align-items:center; gap:9px; padding:7px 8px; border-radius:7px; border:none; background:none; font:inherit; font-size:11.5px; cursor:pointer; text-align:left; color:var(--ink); }
+.gopt:hover { background:#F5F8FE; }
+.gopt.on { background:#F2F7FF; }
+.gopt .box { width:13px; height:13px; border:1px solid #C9D2E2; border-radius:3px; flex:0 0 13px; position:relative; }
+.gopt.on .box { background:var(--blue); border-color:var(--blue); }
+.gopt.on .box:after { content:''; position:absolute; left:4px; top:2px; width:3px; height:6px; border:solid #fff; border-width:0 1.5px 1.5px 0; transform:rotate(45deg); }
+.gopt .nm { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.gopt .num { color:var(--muted); font-variant-numeric:tabular-nums; }
+.gpop-foot { display:flex; align-items:center; gap:10px; border-top:1px solid #F0F2F7; margin-top:8px; padding-top:8px; font-size:10.5px; color:var(--muted); }
+.gpop-foot .sp { flex:1; }
+.gpop-foot button { background:none; border:none; font:inherit; font-size:10.5px; cursor:pointer; color:var(--blue-deep); padding:0 2px; }
+.gpop-foot button:hover { text-decoration:underline; }
+.gpop.up { top:auto; bottom:calc(100% + 6px); }
+
 </style>
 </head>
 <body>
@@ -610,7 +640,7 @@ button.gitem { cursor:pointer; text-align:left; }
   const S = {
     view: 'list', tab: 'run', batchId: null,
     strategy: 'credit_offline', business: 'MTN_Uganda', version: 'v20', versionType: 'FORMAL', batchName: '', desc: '',
-    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, pushArm: false, mcat: 'inc',
+    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, groupOpen: false, groupUp: false, pushArm: false, mcat: 'inc',
     pickerDraft: [], pickerSearch: '', running: false, pct: 0, timer: null, lastShard: -1
   };
 
@@ -760,18 +790,13 @@ button.gitem { cursor:pointer; text-align:left; }
       (s.beta ? '<option value="BETA"' + (S.versionType === 'BETA' ? ' selected' : '') + '>Test</option>' : '');
     const verOpts = versions.map((v) => '<option value="' + v + '"' + (v === S.version ? ' selected' : '') + '>' + v + '</option>').join('');
     const person = '<svg class="gicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.6-3.2 2.8-4.9 5.5-4.9s4.9 1.7 5.5 4.9"/><path d="M15.8 6.2a2.8 2.8 0 010 5.4"/><path d="M17.6 19c-.2-1.6-.7-2.9-1.4-3.8 2.2.2 3.8 1.7 4.3 3.8"/></svg>';
-    const selCards = s.groups.filter((g) => S.groups.includes(g.id)).map((g) =>
-      '<div class="gcard"><i class="gx" data-remove-group="' + g.id + '">×</i>' +
-      '<div class="gc-row"><span class="k">分组名称</span><span class="v">' + g.name + '</span></div>' +
-      '<div class="gc-row"><span class="k">客户数</span><span class="v">' + fmt(g.crowd) + '</span></div>' +
-      '<div class="gc-row"><span class="k">更新时间</span><span class="v">' + g.updated + '</span></div>' +
-      '<div class="gc-row"><span class="k">筛选条件</span><span class="v mono" title="' + g.desc + '">' + g.desc + '</span></div>' +
-      '</div>'
-    ).join('') || '<div class="gp-empty">从左侧选择客户分组</div>';
+    const selChips = s.groups.filter((g) => S.groups.includes(g.id)).map((g) =>
+      '<span class="gchip" title="' + g.updated + ' · ' + g.desc + '"><b>' + g.name + '</b><span class="n">' + fmt(g.crowd) + '</span><i class="x" data-gremove="' + g.id + '">×</i></span>'
+    ).join('');
     const q = (S.gsearch || '').trim().toLowerCase();
     const listRows = s.groups.filter((g) => !q || g.name.toLowerCase().includes(q)).map((g) => {
       const on = S.groups.includes(g.id);
-      return '<button class="gitem ' + (on ? 'sel' : '') + '" data-gtoggle="' + g.id + '">' + person + '<span class="nm">' + g.name + '</span><span class="gnum">' + fmt(g.crowd) + '</span>' + (on ? '<svg class="gchk" viewBox="0 0 10 10" fill="none"><path d="M2 5.2l2 2 4-4.4" stroke="#5095FF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '') + '</button>';
+      return '<button class="gopt ' + (on ? 'on' : '') + '" data-gtoggle="' + g.id + '" title="' + g.updated + ' · ' + g.desc + '"><span class="box"></span><span class="nm">' + g.name + '</span><span class="num">' + fmt(g.crowd) + '</span></button>';
     }).join('') || '<div class="gp-empty">没有匹配的分组</div>';
     const field = (label, inner, cls) => '<div class="field ' + (cls || '') + '"><label>' + label + '</label>' + inner + '</div>';
     return '<section class="box form-box">' +
@@ -787,11 +812,18 @@ button.gitem { cursor:pointer; text-align:left; }
         field('描述', '<input class="input" id="batchDesc" placeholder="可选，一句话说明" value="' + (S.desc || '').replace(/"/g, '&quot;') + '">') +
       '</div>' +
       '<div class="field" style="margin-top:14px"><label>客户分组<i class="req">*</i></label>' +
-        '<div class="gp-wrap">' +
-          '<div class="gp-left"><div class="gp-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.2"/><path d="M16 16l4.5 4.5" stroke-linecap="round"/></svg><input id="gSearch" placeholder="搜索分组名称" value="' + (S.gsearch || '').replace(/"/g, '&quot;') + '"></div><div class="glist">' + listRows + '</div></div>' +
-          '<div class="gp-right"><div class="gp-res-title">已选分组（' + cfg.groups.length + '）</div><div class="glist">' + selCards + '</div></div>' +
+        '<div class="gsel">' +
+          '<button class="gsel-box' + (S.groupOpen ? ' open' : '') + '" data-gopen>' +
+            '<div class="gchips">' + (selChips || '<span class="gsel-ph">选择客户分组</span>') + '</div>' +
+            '<svg class="gsel-chev" viewBox="0 0 10 6" fill="none" style="transform:translateY(-50%) rotate(' + (S.groupOpen ? 180 : 0) + 'deg)"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+          '</button>' +
+          (S.groupOpen ? '<div class="gpop' + (S.groupUp ? ' up' : '') + '">' +
+            '<div class="gp-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.2"/><path d="M16 16l4.5 4.5" stroke-linecap="round"/></svg><input id="gSearch" placeholder="搜索分组名称" value="' + (S.gsearch || '').replace(/"/g, '&quot;') + '"></div>' +
+            '<div class="gpop-list">' + listRows + '</div>' +
+            '<div class="gpop-foot"><span>已选 ' + cfg.groups.length + ' 个 · 合计 ' + fmt(cfg.crowd) + ' 人</span><span class="sp"></span><button data-gclear>清空</button><button data-gdone>完成</button></div>' +
+          '</div>' : '') +
         '</div>' +
-        '<div class="gp-foot"><span>合计 <b>' + fmt(cfg.crowd) + '</b> 位客户</span><button class="gp-reset" data-greset>重置</button></div>' +
+        '<div class="gsel-hint">已选 <b>' + cfg.groups.length + '</b> 个分组 · 合计 <b>' + fmt(cfg.crowd) + '</b> 位客户</div>' +
       '</div>' +
       '<div class="form-foot split"><div class="run-sum"><span>预计 <b>' + wan(cfg.crowd) + '</b> 人</span><i>·</i><span><b>' + fmt(cfg.shards) + '</b> 分片</span><i>·</i><span>约 <b>' + hhmm(cfg.runMin) + '</b></span></div>' +
         (cfg.groups.length ? '' : '<span class="foot-hint">请选择至少一个客户分组</span>') +
@@ -1175,6 +1207,7 @@ button.gitem { cursor:pointer; text-align:left; }
 
   /* ---------- events ---------- */
   function bind() {
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && S.groupOpen) { S.groupOpen = false; renderApp(); } });
     document.addEventListener('click', function (e) {
       const nav = e.target.closest('[data-nav]');
       if (nav) { if (nav.dataset.nav === 'create') { S.batchName = ''; S.desc = ''; S.view = 'create'; } else { S.view = 'list'; } renderApp(); return; }
@@ -1186,7 +1219,20 @@ button.gitem { cursor:pointer; text-align:left; }
       if (tab) { S.tab = tab.dataset.tab; renderApp(); return; }
       const launch = e.target.closest('[data-launch]'); if (launch && !launch.disabled) { startRun(); return; }
       const stop = e.target.closest('[data-stop]'); if (stop) { stopRun(); return; }
-      if (e.target.closest('[data-greset]')) { S.groups = []; renderApp(); return; }
+      const gt = e.target.closest('[data-gtoggle]');
+      if (gt) { const id = gt.dataset.gtoggle; if (S.groups.includes(id)) { S.groups = S.groups.filter((x) => x !== id); } else { S.groups.push(id); } renderApp(); return; }
+      const grem = e.target.closest('[data-gremove]');
+      if (grem) { S.groups = S.groups.filter((x) => x !== grem.dataset.gremove); renderApp(); return; }
+      if (e.target.closest('[data-gopen]')) {
+        if (!S.groupOpen) {
+          const box = document.querySelector('.gsel-box');
+          S.groupUp = box ? box.getBoundingClientRect().bottom > window.innerHeight * 0.62 : false;
+        }
+        S.groupOpen = !S.groupOpen; renderApp(); return;
+      }
+      if (e.target.closest('[data-gdone]')) { S.groupOpen = false; renderApp(); return; }
+      if (e.target.closest('[data-gclear]')) { S.groups = []; renderApp(); return; }
+      if (S.groupOpen && !e.target.closest('.gsel')) { S.groupOpen = false; renderApp(); return; }
       const mcat = e.target.closest('[data-mcat]');
       if (mcat) { S.mcat = mcat.dataset.mcat; renderApp(); return; }
       const mcell = e.target.closest('[data-mcell]');
