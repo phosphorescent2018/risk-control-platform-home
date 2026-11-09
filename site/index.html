@@ -1060,6 +1060,22 @@ button.gitem { cursor:pointer; text-align:left; }
           (S.scheduleMode === 'at' ? field('重复', '<div class="selwrap"><select class="input select" id="schedRepeat"><option value="none"' + (S.scheduleRepeat === 'none' ? ' selected' : '') + '>不重复</option><option value="daily"' + (S.scheduleRepeat === 'daily' ? ' selected' : '') + '>每天</option><option value="weekly"' + (S.scheduleRepeat === 'weekly' ? ' selected' : '') + '>每周</option></select>' + chev + '</div>') : '') +
         '</div>' +
       '</div>' +
+      '<div class="field" style="margin-top:14px"><label>客户分组<i class="req">*</i></label>' +
+        '<div class="gblock' + (S.groupOpen ? ' open' : '') + '">' +
+        '<div class="gsel">' +
+          '<div class="gsel-box' + (S.groupOpen ? ' open' : '') + '" data-gopen>' +
+            '<span class="gsel-inline">' + (cfg.groups.length ? '已选 <b>' + cfg.groups.length + '</b> 个分组 · 合计 <b>' + fmt(cfg.crowd) + '</b> 位客户' : '<span class="gsel-ph">未选择客户分组</span>') + '</span>' +
+            '<button class="gadd" data-gopen><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 2.2v7.6M2.2 6h7.6"/></svg>' + (S.groupOpen ? '收起' : '添加分组') + '</button>' +
+          '</div>' +
+          (S.groupOpen ? '<div class="gpop' + (S.groupUp ? ' up' : '') + '">' +
+            '<div class="gp-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.2"/><path d="M16 16l4.5 4.5" stroke-linecap="round"/></svg><input id="gSearch" placeholder="搜索分组名称" value="' + (S.gsearch || '').replace(/"/g, '&quot;') + '"></div>' +
+            '<div class="gpop-list">' + listRows + '</div>' +
+            '<div class="gpop-foot"><span>已选 ' + cfg.groups.length + ' 个 · 合计 ' + fmt(cfg.crowd) + ' 人</span><span class="sp"></span><button data-gclear>清空</button><button data-gdone>完成</button></div>' +
+          '</div>' : '') +
+        '</div>' +
+        (cfg.groups.length ? '<div class="gmeta-list"><div class="gmeta-head"><span>分组名称</span><span>客户数</span><span>更新时间</span><span>筛选条件</span><span></span></div>' + selDetails + '</div>' : '') +
+        '</div>' +
+      '</div>' +
       '<div class="field" style="margin-top:12px"><label>报告<span class="lbl-note">可多选，不选则不生成报告；勾选后需填写对比批次</span></label>' +
         '<div class="rpt-rows">' + REPORT_DEFS.map((d) => {
           const on = S.reports.indexOf(d.code) >= 0;
