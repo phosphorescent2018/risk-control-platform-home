@@ -67,7 +67,7 @@
   const S = {
     view: 'list', tab: 'run', batchId: null,
     strategy: 'credit_offline', versionType: 'FORMAL', batchName: '', desc: '',
-    groups: ['wallet_active'], selDay: '2026-10-23', calOpen: true,
+    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true,
     pickerDraft: [], pickerSearch: '', running: false, pct: 0, timer: null, lastShard: -1
   };
 
@@ -208,24 +208,39 @@
     const opts = Object.values(STRATEGIES).map((x) =>
       '<button class="opt ' + (x.key === S.strategy ? 'on' : '') + '" data-strategy="' + x.key + '"><b>' + x.label + '</b><i>' + x.scene + ' · ' + x.official + '</i></button>'
     ).join('');
-    const chips = s.groups.filter((g) => S.groups.includes(g.id)).map((g) =>
-      '<span class="gchip">' + g.name + '<i data-remove-group="' + g.id + '">×</i></span>'
-    ).join('');
+    const selRows = s.groups.filter((g) => S.groups.includes(g.id)).map((g) =>
+      '<div class="gitem sel"><span class="nm">' + g.name + '</span><span class="gnum">' + fmt(g.crowd) + '</span><i class="gx" data-remove-group="' + g.id + '">×</i></div>'
+    ).join('') || '<div class="gp-empty">暂无选择，从左侧选择分组</div>';
+    const person = '<svg class="gicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20c.7-3.6 3.2-5.6 6.5-5.6s5.8 2 6.5 5.6"/></svg>';
+    const q = (S.gsearch || '').trim().toLowerCase();
+    const listRows = s.groups.filter((g) => !q || g.name.toLowerCase().includes(q)).map((g) => {
+      const on = S.groups.includes(g.id);
+      return '<button class="gitem ' + (on ? 'sel' : '') + '" data-gtoggle="' + g.id + '">' + person + '<span class="nm">' + g.name + '</span><span class="gnum">' + fmt(g.crowd) + '</span>' + (on ? '<svg class="gchk" viewBox="0 0 10 10" fill="none"><path d="M2 5.2l2 2 4-4.4" stroke="#5095FF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '') + '</button>';
+    }).join('') || '<div class="gp-empty">没有匹配的分组</div>';
     const field = (label, inner, cls) => '<div class="field ' + (cls || '') + '"><label>' + label + '</label>' + inner + '</div>';
     return '<section class="box form-box">' +
       '<div class="box-head"><div><h3>跑批配置</h3></div></div>' +
-      '<div class="form-grid">' +
+      '<div class="grid3">' +
         field('业务线', '<div class="static">MTN_Uganda</div>') +
+        field('任务类型', '<div class="static">离线策略批次</div>') +
         field('批次名称<i class="req">*</i>', '<input class="input" id="batchName" placeholder="例如：贷前-1105" value="' + (S.batchName || '').replace(/"/g, '&quot;') + '">') +
-        field('策略', '<div class="opts">' + opts + '</div>', 'span2') +
+      '</div>' +
+      '<div class="grid3">' +
+        field('策略', '<div class="opts">' + opts + '</div>', 'span3') +
+      '</div>' +
+      '<div class="grid3">' +
         field('版本类型', s.beta
           ? '<div class="seg"><button data-version="FORMAL" class="' + (S.versionType === 'FORMAL' ? 'on' : '') + '">Official</button><button data-version="BETA" class="' + (S.versionType === 'BETA' ? 'on' : '') + '">Test</button></div>'
           : '<div class="static">Official</div>') +
         field('策略版本', '<div class="static">' + version + '</div>') +
-        field('描述', '<textarea class="textarea" id="batchDesc" rows="2" placeholder="可选">' + (S.desc || '') + '</textarea>', 'span2') +
-        field('客户分组',
-          '<div class="group-summary"><span>已选 <b>' + cfg.groups.length + '</b> 个 · 合计 <b>' + wan(cfg.crowd) + '</b></span><button class="btn sm" data-open-groups>选择分组</button></div>' +
-          '<div class="group-chips">' + chips + '</div>', 'span2') +
+      '</div>' +
+      '<div class="field" style="margin-top:12px"><label>描述</label><textarea class="textarea" id="batchDesc" rows="1" placeholder="可选">' + (S.desc || '') + '</textarea></div>' +
+      '<div class="field" style="margin-top:12px"><label>客户分组<i class="req">*</i></label>' +
+        '<div class="gp-wrap">' +
+          '<div class="gp-left"><input class="input" id="gSearch" placeholder="搜索分组名称" value="' + (S.gsearch || '').replace(/"/g, '&quot;') + '"><div class="glist">' + listRows + '</div></div>' +
+          '<div class="gp-right"><div class="gp-title">已选分组（' + cfg.groups.length + '）</div><div class="glist">' + selRows + '</div>' +
+            '<div class="gp-total">已选 ' + cfg.groups.length + ' 个分组 · 合计 ' + wan(cfg.crowd) + '</div></div>' +
+        '</div>' +
       '</div>' +
       '<div class="form-foot"><button class="btn primary" data-launch>发起跑批</button></div>' +
     '</section>';
@@ -595,6 +610,7 @@
     document.addEventListener('input', function (e) {
       if (e.target.id === 'batchName') S.batchName = e.target.value;
       if (e.target.id === 'batchDesc') S.desc = e.target.value;
+      if (e.target.id === 'gSearch') { S.gsearch = e.target.value; renderApp(); const i = $('#gSearch'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
     });
     $('#hideBtn').addEventListener('click', function () {
       const app = $('#app'); app.classList.toggle('collapsed');
