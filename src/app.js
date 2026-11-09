@@ -25,7 +25,7 @@
 
   const STRATEGIES = {
     credit_offline: {
-      key: 'credit_offline', label: 'credit_offline', scene: '贷前', official: 'v20', beta: null,
+      key: 'credit_offline', label: 'credit_offline', scene: '贷前', official: 'v20', beta: null, versions: ['v20', 'v18', 'v16'],
       product: 'MTN_UG_APP', speed: 217, waitMin: 22,
       sliceDate: '2026-10-23', sliceTime: '22:13',
       groups: [
@@ -45,7 +45,7 @@
       ]
     },
     Dai_Zhong: {
-      key: 'Dai_Zhong', label: 'Dai_Zhong', scene: '贷中', official: 'v47', beta: null,
+      key: 'Dai_Zhong', label: 'Dai_Zhong', scene: '贷中', official: 'v47', beta: null, versions: ['v47', 'v42', 'v39'],
       product: 'MTN_UG_APP', speed: 604, waitMin: 73,
       sliceDate: '2026-10-05', sliceTime: '22:13',
       groups: [
@@ -66,7 +66,7 @@
 
   const S = {
     view: 'list', tab: 'run', batchId: null,
-    strategy: 'credit_offline', versionType: 'FORMAL', batchName: '', desc: '',
+    strategy: 'credit_offline', business: 'MTN_Uganda', version: 'v20', versionType: 'FORMAL', batchName: '', desc: '',
     groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, pushArm: false, mcat: 'inc',
     pickerDraft: [], pickerSearch: '', running: false, pct: 0, timer: null, lastShard: -1
   };
@@ -88,7 +88,7 @@
 
   const cur = () => STRATEGIES[S.strategy];
   const currentBatch = () => BATCHES.find((b) => b.id === S.batchId) || null;
-  const versionOf = (cfg) => { const s = STRATEGIES[cfg.strategy]; return cfg.versionType === 'FORMAL' ? s.official : s.beta; };
+  const versionOf = (cfg) => { const s = STRATEGIES[cfg.strategy]; return cfg.version || (cfg.versionType === 'FORMAL' ? s.official : s.beta); };
   const totalMin = (cfg) => cfg.runMin + 63 + STRATEGIES[cfg.strategy].waitMin;
 
   function snap() {
@@ -96,7 +96,7 @@
     const groups = s.groups.filter((g) => S.groups.includes(g.id));
     const crowd = groups.reduce((a, g) => a + g.crowd, 0);
     return {
-      strategy: S.strategy, versionType: S.versionType, groups: groups.map((g) => g.id),
+      strategy: S.strategy, business: S.business, version: S.version, versionType: S.versionType, groups: groups.map((g) => g.id),
       crowd, runMin: crowd ? Math.max(1, Math.round(crowd / (s.speed * 10000) * 60)) : 0,
       shards: Math.ceil(crowd / 4000)
     };
@@ -205,14 +205,16 @@
   function renderConfigForm() {
     const s = cur();
     const cfg = snap();
-    const version = S.versionType === 'FORMAL' ? s.official : s.beta;
-    const opts = Object.values(STRATEGIES).map((x) =>
-      '<option value="' + x.key + '"' + (x.key === S.strategy ? ' selected' : '') + '>' + x.label + ' · ' + x.scene + '</option>'
-    ).join('');
+    const versions = s.versions || [s.official];
     const chev = '<svg class="chev" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const sel = (id, opts) => '<div class="selwrap"><select class="input select" id="' + id + '">' + opts + '</select>' + chev + '</div>';
+    const stratOpts = Object.values(STRATEGIES).map((x) =>
+      '<option value="' + x.key + '"' + (x.key === S.strategy ? ' selected' : '') + '>' + x.label + ' · ' + x.scene + '</option>').join('');
     const vtOpts = '<option value="FORMAL"' + (S.versionType === 'FORMAL' ? ' selected' : '') + '>Official</option>' +
       (s.beta ? '<option value="BETA"' + (S.versionType === 'BETA' ? ' selected' : '') + '>Test</option>' : '');
-    const selRows = s.groups.filter((g) => S.groups.includes(g.id)).map((g) =>
+    const verOpts = versions.map((v) => '<option value="' + v + '"' + (v === S.version ? ' selected' : '') + '>' + v + '</option>').join('');
+    const person = '<svg class="gicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.6-3.2 2.8-4.9 5.5-4.9s4.9 1.7 5.5 4.9"/><path d="M15.8 6.2a2.8 2.8 0 010 5.4"/><path d="M17.6 19c-.2-1.6-.7-2.9-1.4-3.8 2.2.2 3.8 1.7 4.3 3.8"/></svg>';
+    const selCards = s.groups.filter((g) => S.groups.includes(g.id)).map((g) =>
       '<div class="gcard"><i class="gx" data-remove-group="' + g.id + '">×</i>' +
       '<div class="gc-row"><span class="k">分组名称</span><span class="v">' + g.name + '</span></div>' +
       '<div class="gc-row"><span class="k">客户数</span><span class="v">' + fmt(g.crowd) + '</span></div>' +
@@ -220,7 +222,6 @@
       '<div class="gc-row"><span class="k">筛选条件</span><span class="v mono" title="' + g.desc + '">' + g.desc + '</span></div>' +
       '</div>'
     ).join('') || '<div class="gp-empty">从左侧选择客户分组</div>';
-    const person = '<svg class="gicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.6-3.2 2.8-4.9 5.5-4.9s4.9 1.7 5.5 4.9"/><path d="M15.8 6.2a2.8 2.8 0 010 5.4"/><path d="M17.6 19c-.2-1.6-.7-2.9-1.4-3.8 2.2.2 3.8 1.7 4.3 3.8"/></svg>';
     const q = (S.gsearch || '').trim().toLowerCase();
     const listRows = s.groups.filter((g) => !q || g.name.toLowerCase().includes(q)).map((g) => {
       const on = S.groups.includes(g.id);
@@ -228,33 +229,34 @@
     }).join('') || '<div class="gp-empty">没有匹配的分组</div>';
     const field = (label, inner, cls) => '<div class="field ' + (cls || '') + '"><label>' + label + '</label>' + inner + '</div>';
     return '<section class="box form-box">' +
-      '<div class="box-head"><div><h3>跑批配置</h3></div></div>' +
+      '<div class="box-head"><div><h3>跑批配置</h3><p class="sub">选择业务线与策略版本，指定批次与人群后发起</p></div></div>' +
       '<div class="grid3">' +
-        field('业务线', '<div class="static">MTN_Uganda</div>') +
-        field('任务类型', '<div class="static">离线策略批次</div>') +
+        field('业务线<i class="req">*</i>', sel('bizSel', '<option value="MTN_Uganda" selected>MTN_Uganda</option>')) +
+        field('策略<i class="req">*</i>', sel('strategySel', stratOpts)) +
+        field('版本类型<i class="req">*</i>', sel('versionSel', vtOpts)) +
+      '</div>' +
+      '<div class="grid3">' +
+        field('策略版本<i class="req">*</i>', sel('verSel', verOpts)) +
         field('批次名称<i class="req">*</i>', '<input class="input" id="batchName" placeholder="例如：贷前-1105" value="' + (S.batchName || '').replace(/"/g, '&quot;') + '">') +
+        field('描述', '<input class="input" id="batchDesc" placeholder="可选，一句话说明" value="' + (S.desc || '').replace(/"/g, '&quot;') + '">') +
       '</div>' +
-      '<div class="grid3">' +
-        field('策略<i class="req">*</i>', '<div class="selwrap"><select class="input select" id="strategySel">' + opts + '</select>' + chev + '</div>') +
-        field('版本类型<i class="req">*</i>', '<div class="selwrap"><select class="input select" id="versionSel">' + vtOpts + '</select>' + chev + '</div>') +
-        field('策略版本', '<div class="static">' + version + '</div>') +
-      '</div>' +
-      '<div class="field" style="margin-top:12px"><label>描述</label><textarea class="textarea" id="batchDesc" rows="1" placeholder="可选">' + (S.desc || '') + '</textarea></div>' +
-      '<div class="field" style="margin-top:12px"><label>客户分组<i class="req">*</i></label>' +
+      '<div class="field" style="margin-top:14px"><label>客户分组<i class="req">*</i></label>' +
         '<div class="gp-wrap">' +
           '<div class="gp-left"><div class="gp-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.2"/><path d="M16 16l4.5 4.5" stroke-linecap="round"/></svg><input id="gSearch" placeholder="搜索分组名称" value="' + (S.gsearch || '').replace(/"/g, '&quot;') + '"></div><div class="glist">' + listRows + '</div></div>' +
-          '<div class="gp-right"><div class="gp-res-title">已选分组（' + cfg.groups.length + '）</div><div class="glist">' + selRows + '</div></div>' +
+          '<div class="gp-right"><div class="gp-res-title">已选分组（' + cfg.groups.length + '）</div><div class="glist">' + selCards + '</div></div>' +
         '</div>' +
         '<div class="gp-foot"><span>合计 <b>' + fmt(cfg.crowd) + '</b> 位客户</span><button class="gp-reset" data-greset>重置</button></div>' +
       '</div>' +
-      '<div class="form-foot">' + (cfg.groups.length ? '' : '<span class="foot-hint">请选择至少一个客户分组</span>') + '<button class="btn primary" data-launch' + (cfg.groups.length ? '' : ' disabled') + '>发起跑批</button></div>' +
+      '<div class="form-foot split"><div class="run-sum"><span>预计 <b>' + wan(cfg.crowd) + '</b> 人</span><i>·</i><span><b>' + fmt(cfg.shards) + '</b> 分片</span><i>·</i><span>约 <b>' + hhmm(cfg.runMin) + '</b></span></div>' +
+        (cfg.groups.length ? '' : '<span class="foot-hint">请选择至少一个客户分组</span>') +
+        '<button class="btn primary" data-launch' + (cfg.groups.length ? '' : ' disabled') + '>发起跑批</button></div>' +
     '</section>';
   }
 
   function renderReadiness() {
     const s = cur();
     const day = s.sliceDate;
-    const st = dayStatus(s, day);
+    const st = dayStatus(s, day) || dayStatus(s, s.sliceDate);
     const ok = [st.wallet, st.od, st.pool].filter((v) => v === 0).length;
     const cal = S.calOpen
       ? '<div class="ready-body"><div class="cal-head"><span>' + md(dateISO(addDays(parseISO(day), -13))) + ' → ' + md(day) + '</span>' +
@@ -673,6 +675,7 @@
         S.strategy = e.target.value;
         const st = STRATEGIES[S.strategy];
         if (!st.beta) S.versionType = 'FORMAL';
+        S.version = (st.versions || [st.official])[0];
         const ids = st.groups.map((g) => g.id);
         S.groups = S.groups.filter((id) => ids.indexOf(id) >= 0);
         if (!S.groups.length) S.groups = [ids[0]];
@@ -680,6 +683,8 @@
         renderApp();
       }
       if (e.target.id === 'versionSel') { S.versionType = e.target.value; renderApp(); }
+      if (e.target.id === 'bizSel') { S.business = e.target.value; renderApp(); }
+      if (e.target.id === 'verSel') { S.version = e.target.value; renderApp(); }
       if (e.target.id === 'batchName') S.batchName = e.target.value;
       if (e.target.id === 'batchDesc') S.desc = e.target.value;
       if (e.target.id === 'gSearch') { S.gsearch = e.target.value; renderApp(); const i = $('#gSearch'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }

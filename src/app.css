@@ -455,3 +455,8 @@ button.gitem { cursor:pointer; text-align:left; }
 .gp-reset:hover { text-decoration:underline; }
 .foot-hint { font-size:10.5px; color:var(--red); margin-right:10px; }
 .gp-empty { min-height:64px; display:flex; align-items:center; justify-content:center; }
+
+.form-foot.split { justify-content:space-between; align-items:center; }
+.run-sum { display:flex; align-items:center; gap:8px; font-size:10.5px; color:var(--muted); }
+.run-sum b { color:var(--ink); font-variant-numeric:tabular-nums; }
+.run-sum i { font-style:normal; color:#D5DAE4; }
