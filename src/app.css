@@ -704,3 +704,21 @@ button.gitem { cursor:pointer; text-align:left; }
 .me-foot .bad { color:#C0392B; }
 .me-foot .sp { flex:1; }
 .me-note { margin-top:6px; font-size:9px; color:#AEB7C6; }
+
+.pdf-card .box-head { margin-bottom:10px; }
+.pdf-preview { display:flex; gap:18px; align-items:center; padding:4px 2px 2px; }
+.pdf-page { position:relative; width:210px; height:268px; background:#fff; border:1px solid #E6E9F0; border-radius:6px; box-shadow:0 8px 20px rgba(20,40,80,.10); padding:16px 16px 12px; flex:0 0 210px; }
+.pdf-badge { position:absolute; top:10px; right:10px; font-size:8px; font-weight:700; letter-spacing:.08em; color:#C0392B; border:1px solid #F0C9C4; background:#FDF3F2; border-radius:3px; padding:2px 4px; }
+.pdf-page b { display:block; font-size:11px; color:var(--ink); max-width:120px; line-height:1.3; }
+.pdf-id { display:block; margin-top:4px; font-size:8px; color:#A9B2C0; font-family:ui-monospace,Menlo,monospace; }
+.pdf-kpis { display:flex; gap:6px; margin-top:12px; }
+.pdf-kpis i { flex:1; height:26px; border-radius:4px; background:#F3F6FC; border:1px solid #E9EEF8; }
+.pdf-lines { margin-top:10px; display:flex; flex-direction:column; gap:5px; }
+.pdf-lines span { height:4px; border-radius:2px; background:#EDF1F7; }
+.pdf-lines span:nth-child(2) { width:86%; }
+.pdf-lines span:nth-child(4) { width:64%; }
+.pdf-chart { margin-top:14px; display:flex; align-items:flex-end; gap:4px; height:52px; padding-bottom:2px; border-bottom:1px solid #EEF1F6; }
+.pdf-chart i { flex:1; background:#CFE0FF; border-radius:2px 2px 0 0; }
+.pdf-chart i:nth-child(1){height:40%}.pdf-chart i:nth-child(2){height:62%}.pdf-chart i:nth-child(3){height:48%}.pdf-chart i:nth-child(4){height:72%}.pdf-chart i:nth-child(5){height:55%}.pdf-chart i:nth-child(6){height:80%}.pdf-chart i:nth-child(7){height:64%}.pdf-chart i:nth-child(8){height:88%}
+.pdf-side b { display:block; font-size:12px; color:var(--ink); }
+.pdf-side span { display:block; margin:4px 0 10px; font-size:10px; color:var(--muted); }

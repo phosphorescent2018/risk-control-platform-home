@@ -393,7 +393,12 @@
       '<div class="box anomaly" style="margin-top:14px"><div class="box-head"><div><h3>异常与重试</h3></div></div><ul>' +
         '<li><span class="pin"></span><div><b>分片重试 ' + (b.retries || 0) + ' 次</b> <span>瞬时超时触发，重试后全部成功</span></div><span class="tag warn">已执行</span></li>' +
         '<li><span class="pin" style="background:#DDE2EA"></span><div><b>整体重试</b> <span>' + (b.failShards > 0 ? '失败分片 ' + b.failShards + '，已自动执行整体重试' : '跑批结束后自动执行一次 · 当前失败分片 0') + '</span></div><span class="tag na">未触发</span></li>' +
-      '</ul></div>';
+      '</ul></div>' +
+      '<div class="box pdf-card" style="margin-top:14px"><div class="box-head"><div><h3>批次事件报告</h3><p class="sub">PDF · 切片搬运 / 执行 / 资源异常全链路 · ' + (b.ended ? b.ended.slice(0, 16) + ' 生成' : '跑批完成后生成') + '</p></div>' +
+        '<button class="btn sm ghost" data-pdf>下载 PDF</button></div>' +
+        '<div class="pdf-preview"><div class="pdf-page"><div class="pdf-badge">PDF</div><b>Batch Event Report</b><span class="pdf-id">' + b.id + '</span>' +
+        '<div class="pdf-kpis"><i></i><i></i><i></i></div><div class="pdf-lines"><span></span><span></span><span></span><span></span></div><div class="pdf-chart"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>' +
+        '<div class="pdf-side"><b>批次事件报告</b><span>共 6 个区块 · 含分片热力图与资源曲线</span><button class="btn sm primary" data-pdf>预览 / 下载</button></div></div></div>';
     drawLiveChart();
     requestAnimationFrame(function () { drawShards($('#liveShards'), cfg.shards, Math.round(cfg.shards * pct), 0, false); });
   }
@@ -734,7 +739,7 @@
   function openBatch(id) {
     const b = BATCHES.find((x) => x.id === id); if (!b) return;
     S.batchId = id;
-    S.tab = b.status === 'completed' ? 'report' : 'run';
+    S.tab = 'run';
     S.view = 'detail';
     renderApp();
   }
@@ -894,6 +899,7 @@
       if (e.target.closest('[data-report-back]')) { S.reportView = 'list'; renderApp(); return; }
       if (e.target.closest('[data-report-soon]')) { toast('该报告模板待接入（' + e.target.closest('[data-report-soon]').dataset.reportSoon + '）'); return; }
       if (e.target.closest('[data-report-export]')) { toast('导出任务已创建（演示）'); return; }
+      if (e.target.closest('[data-pdf]')) { toast('批次事件报告 PDF 已生成（演示）'); return; }
       if (e.target.closest('[data-report-all]')) { toast('已提交全部报告导出（演示）'); return; }
       const sc = e.target.closest('[data-sched]');
       if (sc) {

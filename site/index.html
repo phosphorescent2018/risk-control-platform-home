@@ -712,6 +712,24 @@ button.gitem { cursor:pointer; text-align:left; }
 .me-foot .sp { flex:1; }
 .me-note { margin-top:6px; font-size:9px; color:#AEB7C6; }
 
+.pdf-card .box-head { margin-bottom:10px; }
+.pdf-preview { display:flex; gap:18px; align-items:center; padding:4px 2px 2px; }
+.pdf-page { position:relative; width:210px; height:268px; background:#fff; border:1px solid #E6E9F0; border-radius:6px; box-shadow:0 8px 20px rgba(20,40,80,.10); padding:16px 16px 12px; flex:0 0 210px; }
+.pdf-badge { position:absolute; top:10px; right:10px; font-size:8px; font-weight:700; letter-spacing:.08em; color:#C0392B; border:1px solid #F0C9C4; background:#FDF3F2; border-radius:3px; padding:2px 4px; }
+.pdf-page b { display:block; font-size:11px; color:var(--ink); max-width:120px; line-height:1.3; }
+.pdf-id { display:block; margin-top:4px; font-size:8px; color:#A9B2C0; font-family:ui-monospace,Menlo,monospace; }
+.pdf-kpis { display:flex; gap:6px; margin-top:12px; }
+.pdf-kpis i { flex:1; height:26px; border-radius:4px; background:#F3F6FC; border:1px solid #E9EEF8; }
+.pdf-lines { margin-top:10px; display:flex; flex-direction:column; gap:5px; }
+.pdf-lines span { height:4px; border-radius:2px; background:#EDF1F7; }
+.pdf-lines span:nth-child(2) { width:86%; }
+.pdf-lines span:nth-child(4) { width:64%; }
+.pdf-chart { margin-top:14px; display:flex; align-items:flex-end; gap:4px; height:52px; padding-bottom:2px; border-bottom:1px solid #EEF1F6; }
+.pdf-chart i { flex:1; background:#CFE0FF; border-radius:2px 2px 0 0; }
+.pdf-chart i:nth-child(1){height:40%}.pdf-chart i:nth-child(2){height:62%}.pdf-chart i:nth-child(3){height:48%}.pdf-chart i:nth-child(4){height:72%}.pdf-chart i:nth-child(5){height:55%}.pdf-chart i:nth-child(6){height:80%}.pdf-chart i:nth-child(7){height:64%}.pdf-chart i:nth-child(8){height:88%}
+.pdf-side b { display:block; font-size:12px; color:var(--ink); }
+.pdf-side span { display:block; margin:4px 0 10px; font-size:10px; color:var(--muted); }
+
 </style>
 </head>
 <body>
@@ -1180,7 +1198,12 @@ button.gitem { cursor:pointer; text-align:left; }
       '<div class="box anomaly" style="margin-top:14px"><div class="box-head"><div><h3>异常与重试</h3></div></div><ul>' +
         '<li><span class="pin"></span><div><b>分片重试 ' + (b.retries || 0) + ' 次</b> <span>瞬时超时触发，重试后全部成功</span></div><span class="tag warn">已执行</span></li>' +
         '<li><span class="pin" style="background:#DDE2EA"></span><div><b>整体重试</b> <span>' + (b.failShards > 0 ? '失败分片 ' + b.failShards + '，已自动执行整体重试' : '跑批结束后自动执行一次 · 当前失败分片 0') + '</span></div><span class="tag na">未触发</span></li>' +
-      '</ul></div>';
+      '</ul></div>' +
+      '<div class="box pdf-card" style="margin-top:14px"><div class="box-head"><div><h3>批次事件报告</h3><p class="sub">PDF · 切片搬运 / 执行 / 资源异常全链路 · ' + (b.ended ? b.ended.slice(0, 16) + ' 生成' : '跑批完成后生成') + '</p></div>' +
+        '<button class="btn sm ghost" data-pdf>下载 PDF</button></div>' +
+        '<div class="pdf-preview"><div class="pdf-page"><div class="pdf-badge">PDF</div><b>Batch Event Report</b><span class="pdf-id">' + b.id + '</span>' +
+        '<div class="pdf-kpis"><i></i><i></i><i></i></div><div class="pdf-lines"><span></span><span></span><span></span><span></span></div><div class="pdf-chart"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>' +
+        '<div class="pdf-side"><b>批次事件报告</b><span>共 6 个区块 · 含分片热力图与资源曲线</span><button class="btn sm primary" data-pdf>预览 / 下载</button></div></div></div>';
     drawLiveChart();
     requestAnimationFrame(function () { drawShards($('#liveShards'), cfg.shards, Math.round(cfg.shards * pct), 0, false); });
   }
@@ -1521,7 +1544,7 @@ button.gitem { cursor:pointer; text-align:left; }
   function openBatch(id) {
     const b = BATCHES.find((x) => x.id === id); if (!b) return;
     S.batchId = id;
-    S.tab = b.status === 'completed' ? 'report' : 'run';
+    S.tab = 'run';
     S.view = 'detail';
     renderApp();
   }
@@ -1681,6 +1704,7 @@ button.gitem { cursor:pointer; text-align:left; }
       if (e.target.closest('[data-report-back]')) { S.reportView = 'list'; renderApp(); return; }
       if (e.target.closest('[data-report-soon]')) { toast('该报告模板待接入（' + e.target.closest('[data-report-soon]').dataset.reportSoon + '）'); return; }
       if (e.target.closest('[data-report-export]')) { toast('导出任务已创建（演示）'); return; }
+      if (e.target.closest('[data-pdf]')) { toast('批次事件报告 PDF 已生成（演示）'); return; }
       if (e.target.closest('[data-report-all]')) { toast('已提交全部报告导出（演示）'); return; }
       const sc = e.target.closest('[data-sched]');
       if (sc) {
