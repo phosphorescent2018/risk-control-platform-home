@@ -453,29 +453,20 @@
       { code: 'IN_LOAN_FULL_POPULATION_FINAL_LIMIT_REPORT', name: '全量客群期次额度报告（Final Limit）', desc: 'Final Limit 版本 · 额度分布矩阵 · 迁移矩阵', blocks: 4, scenes: ['IN_LOAN'] }
     ];
     const sceneLabel = scene === 'PRE_LOAN' ? 'Pre-loan Operation' : scene === 'IN_LOAN' ? 'Mid-loan Credit Adjustment' : 'No Report';
-    const defs = scene === 'NONE' ? [] : DEFS.filter((d) => d.scenes.indexOf(scene) >= 0);
-    const head = '<div class="box-head"><div><h3>报告</h3><p class="sub">' + b.id + ' · ' + s.label + ' ' + versionOf(cfg) + ' · 切片日 ' + (cfg.sliceDate || s.sliceDate) + ' · 报告场景 ' + sceneLabel + '</p></div>' +
-      (defs.length ? '<button class="btn sm ghost" data-report-all>导出全部</button>' : '') + '</div>';
-    if (!defs.length) {
-      $('#panelDetail').innerHTML = '<div class="box rpt">' + head + '<div class="rpt-empty"><b>本批次未生成报告</b><span>Report Scenario = No Report，需要报告请在发起跑批时选择报告场景。</span></div></div>';
-      return;
-    }
-    const allTplRows = DEFS.map((d) => '<div class="rpt-tpl' + (defs.indexOf(d) >= 0 ? ' on' : '') + '">' +
-      '<span class="n">' + d.name + '</span><code>' + d.code + '</code>' +
-      '<span class="sc">' + d.scenes.map((x) => x === 'PRE_LOAN' ? 'Pre-loan' : 'Mid-loan').join(' / ') + '</span>' +
-      '<span class="bl">' + d.blocks + ' 区块</span>' +
-      '<span class="st">' + (defs.indexOf(d) >= 0 ? '本场景启用' : '未启用') + '</span></div>').join('');
-    const rows = defs.map((d) => '<div class="rpt-row">' +
+    const defs = DEFS.map((d) => ({ code: d.code, name: d.name, desc: d.desc, blocks: d.blocks, ok: scene !== 'NONE' && d.scenes.indexOf(scene) >= 0 }));
+    const okCount = defs.filter((d) => d.ok).length;
+    const head = '<div class="box-head"><div><h3>报告</h3><p class="sub">' + b.id + ' · ' + s.label + ' ' + versionOf(cfg) + ' · 切片日 ' + (cfg.sliceDate || s.sliceDate) + ' · 报告场景 ' + sceneLabel + ' · 共 5 份，已生成 ' + okCount + ' 份</p></div>' +
+      '<button class="btn sm ghost" data-report-all>导出全部</button></div>';
+    const rows = defs.map((d) => '<div class="rpt-row' + (d.ok ? '' : ' off') + '">' +
       '<div class="rpt-ico"><span></span></div>' +
       '<div class="rpt-main"><b>' + d.name + '</b><span>' + d.desc + '</span><code>' + d.code + '</code></div>' +
       '<span class="rpt-blocks">' + d.blocks + ' 区块</span>' +
-      '<span class="tag ok">已生成</span>' +
-      '<span class="rpt-time">' + b.ended.slice(0, 16) + '</span>' +
-      '<div class="rpt-act"><button class="btn sm ghost" data-report-soon="' + d.code + '">查看</button><button class="btn sm ghost" data-report-export="' + d.code + '">导出</button></div>' +
+      '<span class="tag ' + (d.ok ? 'ok' : 'na') + '">' + (d.ok ? '已生成' : '不适用') + '</span>' +
+      '<span class="rpt-time">' + (d.ok ? b.ended.slice(0, 16) : '—') + '</span>' +
+      '<div class="rpt-act">' + (d.ok ? '<button class="btn sm ghost" data-report-soon="' + d.code + '">查看</button><button class="btn sm ghost" data-report-export="' + d.code + '">导出</button>' : '<span class="rpt-na">—</span>') + '</div>' +
       '</div>').join('');
     $('#panelDetail').innerHTML = '<div class="box rpt">' + head + '<div class="rpt-list">' + rows + '</div>' +
-      '<div class="rpt-note">报告清单来自 DE 生产配置：t_risk_report_definition 定义 5 个模板（含 Final Limit），按报告场景启用。</div>' +
-      '<div class="rpt-tpls"><div class="rpt-tpl-head">报告模板（含 Final Limit，共 5 个）</div>' + allTplRows + '</div></div>';
+      '<div class="rpt-note">报告清单取自 DE 生产配置：t_risk_report_definition 共 5 个模板（含 Final Limit），按报告场景判断本批次是否生成。</div></div>';
   }
 
   function renderEventReport() {
