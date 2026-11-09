@@ -67,7 +67,7 @@
   const S = {
     view: 'list', tab: 'run', batchId: null,
     strategy: 'credit_offline', business: 'MTN_Uganda', version: 'v20', versionType: 'FORMAL', batchName: '', desc: '',
-    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, reportView: 'list', confirmOpen: false, groupOpen: false, groupUp: false, pushArm: false, mcat: 'inc',
+    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, reportView: 'list', reportScenario: 'PRE_LOAN', confirmOpen: false, groupOpen: false, groupUp: false, pushArm: false, mcat: 'inc',
     pickerDraft: [], pickerSearch: '', running: false, pct: 0, timer: null, lastShard: -1
   };
 
@@ -76,7 +76,7 @@
     const gs = s.groups.filter((g) => groups.includes(g.id));
     const crowd = gs.reduce((a, g) => a + g.crowd, 0);
     return {
-      strategy, version: s.official, versionType: 'FORMAL', sliceDate: day || s.sliceDate, sliceTime: s.sliceTime,
+      strategy, version: s.official, versionType: 'FORMAL', reportScenario: strategy === 'credit_offline' ? 'PRE_LOAN' : 'IN_LOAN', sliceDate: day || s.sliceDate, sliceTime: s.sliceTime,
       groups: groups.slice(), crowd, runMin: Math.max(1, Math.round(crowd / (s.speed * 10000) * 60)), shards: Math.ceil(crowd / 4000)
     };
   }
@@ -99,7 +99,7 @@
     const groups = s.groups.filter((g) => S.groups.includes(g.id));
     const crowd = groups.reduce((a, g) => a + g.crowd, 0);
     return {
-      strategy: S.strategy, business: S.business, version: S.version, versionType: S.versionType, groups: groups.map((g) => g.id), sliceDate: s.sliceDate, sliceTime: s.sliceTime,
+      strategy: S.strategy, business: S.business, version: S.version, reportScenario: S.reportScenario, versionType: S.versionType, groups: groups.map((g) => g.id), sliceDate: s.sliceDate, sliceTime: s.sliceTime,
       crowd, runMin: crowd ? Math.max(1, Math.round(crowd / (s.speed * 10000) * 60)) : 0,
       shards: Math.ceil(crowd / 4000)
     };
@@ -252,7 +252,10 @@
       '<div class="grid3">' +
         field('策略版本<i class="req">*</i>', sel('verSel', verOpts)) +
         field('批次名称<i class="req">*</i>', '<input class="input" id="batchName" placeholder="例如：贷前-' + dateISO(new Date()).slice(5).replace('-', '') + '" value="' + (S.batchName || '').replace(/"/g, '&quot;') + '">') +
-        field('描述', '<input class="input" id="batchDesc" placeholder="可选，一句话说明" value="' + (S.desc || '').replace(/"/g, '&quot;') + '">') +
+        field('报告场景<i class="req">*</i>', '<div class="selwrap"><select class="input select" id="reportSel">' +
+          '<option value="PRE_LOAN"' + (S.reportScenario === 'PRE_LOAN' ? ' selected' : '') + '>Pre-loan Operation</option>' +
+          '<option value="IN_LOAN"' + (S.reportScenario === 'IN_LOAN' ? ' selected' : '') + '>Mid-loan Credit Adjustment</option>' +
+          '<option value="NONE"' + (S.reportScenario === 'NONE' ? ' selected' : '') + '>No Report</option></select>' + chev + '</div>') +
       '</div>' +
       '<div class="field" style="margin-top:14px"><label>客户分组<i class="req">*</i></label>' +
         '<div class="gblock' + (S.groupOpen ? ' open' : '') + '">' +
@@ -441,28 +444,37 @@
       return;
     }
     const cfg = b.config, s = STRATEGIES[cfg.strategy];
-    const isPre = cfg.strategy === 'credit_offline';
-    const defs = [
-      { code: 'BATCH_EVENT_REPORT', name: '跑批事件报告', desc: '切片搬运 → 等待 → 执行全链路事件、速度与资源异常', blocks: 6, ok: true, event: true },
-      { code: 'PRE_LOAN_OPERATION_REPORT', name: '贷前运营跑批报告', desc: '钱包漏斗 · 授信额度区间 · 规则占比 · 模型 PSI', blocks: 9, ok: isPre },
-      { code: 'IN_LOAN_LIMIT_MIGRATION_REPORT', name: '贷中额度迁移报告', desc: '二维额度迁移矩阵 · 调整前后分布 · 降为 0 原因', blocks: 7, ok: !isPre },
-      { code: 'IN_LOAN_MODEL_STABILITY_REPORT', name: '模型稳定性与入模变量报告', desc: 'A/B/F 模型稳定性 · PSI 监控 · Top10 变量 CSI', blocks: 5, ok: true },
-      { code: 'IN_LOAN_FULL_POPULATION_LIMIT_REPORT', name: '全量客群期次额度报告', desc: '新旧 Profiling 额度分布矩阵 · 本次/上次迁移矩阵', blocks: 4, ok: !isPre },
-      { code: 'IN_LOAN_FULL_POPULATION_FINAL_LIMIT_REPORT', name: '全量客群期次额度报告（Final Limit）', desc: 'Final Limit 版本 · 额度分布矩阵 · 迁移矩阵', blocks: 4, ok: !isPre }
+    const scene = cfg.reportScenario || (cfg.strategy === 'credit_offline' ? 'PRE_LOAN' : 'IN_LOAN');
+    const DEFS = [
+      { code: 'PRE_LOAN_OPERATION_REPORT', name: '贷前运营跑批报告', desc: '钱包漏斗 · 授信额度区间 · 规则占比 · 模型 PSI', blocks: 9, scenes: ['PRE_LOAN'] },
+      { code: 'IN_LOAN_LIMIT_MIGRATION_REPORT', name: '贷中额度迁移报告', desc: '二维额度迁移矩阵 · 调整前后分布 · 降为 0 原因', blocks: 7, scenes: ['IN_LOAN'] },
+      { code: 'IN_LOAN_MODEL_STABILITY_REPORT', name: '模型稳定性与入模变量报告', desc: 'A/B/F 模型稳定性 · PSI 监控 · Top10 变量 CSI', blocks: 5, scenes: ['PRE_LOAN', 'IN_LOAN'] },
+      { code: 'IN_LOAN_FULL_POPULATION_LIMIT_REPORT', name: '全量客群期次额度报告', desc: '新旧 Profiling 额度分布矩阵 · 本次/上次迁移矩阵', blocks: 4, scenes: ['IN_LOAN'] }
     ];
-    const rows = defs.map((d) => '<div class="rpt-row' + (d.ok ? '' : ' off') + '">' +
+    const sceneLabel = scene === 'PRE_LOAN' ? 'Pre-loan Operation' : scene === 'IN_LOAN' ? 'Mid-loan Credit Adjustment' : 'No Report';
+    const defs = scene === 'NONE' ? [] : DEFS.filter((d) => d.scenes.indexOf(scene) >= 0);
+    const head = '<div class="box-head"><div><h3>报告</h3><p class="sub">' + b.id + ' · ' + s.label + ' ' + versionOf(cfg) + ' · 切片日 ' + (cfg.sliceDate || s.sliceDate) + ' · 报告场景 ' + sceneLabel + '</p></div>' +
+      (defs.length ? '<button class="btn sm ghost" data-report-all>导出全部</button>' : '') + '</div>';
+    if (!defs.length) {
+      $('#panelDetail').innerHTML = '<div class="box rpt">' + head + '<div class="rpt-empty"><b>本批次未生成报告</b><span>Report Scenario = No Report，需要报告请在发起跑批时选择报告场景。</span></div></div>';
+      return;
+    }
+    const allTplRows = DEFS.map((d) => '<div class="rpt-tpl' + (defs.indexOf(d) >= 0 ? ' on' : '') + '">' +
+      '<span class="n">' + d.name + '</span><code>' + d.code + '</code>' +
+      '<span class="sc">' + d.scenes.map((x) => x === 'PRE_LOAN' ? 'Pre-loan' : 'Mid-loan').join(' / ') + '</span>' +
+      '<span class="bl">' + d.blocks + ' 区块</span>' +
+      '<span class="st">' + (defs.indexOf(d) >= 0 ? '本场景启用' : '未启用') + '</span></div>').join('');
+    const rows = defs.map((d) => '<div class="rpt-row">' +
       '<div class="rpt-ico"><span></span></div>' +
       '<div class="rpt-main"><b>' + d.name + '</b><span>' + d.desc + '</span><code>' + d.code + '</code></div>' +
       '<span class="rpt-blocks">' + d.blocks + ' 区块</span>' +
-      '<span class="tag ' + (d.ok ? 'ok' : 'na') + '">' + (d.ok ? '已生成' : '不适用') + '</span>' +
-      '<span class="rpt-time">' + (d.ok ? b.ended.slice(0, 16) : '—') + '</span>' +
-      '<div class="rpt-act">' + (d.ok ? '<button class="btn sm ghost" data-report-' + (d.event ? 'open' : 'soon') + '="' + d.code + '">查看</button><button class="btn sm ghost" data-report-export="' + d.code + '">导出</button>' : '<span class="rpt-na">—</span>') + '</div>' +
+      '<span class="tag ok">已生成</span>' +
+      '<span class="rpt-time">' + b.ended.slice(0, 16) + '</span>' +
+      '<div class="rpt-act"><button class="btn sm ghost" data-report-soon="' + d.code + '">查看</button><button class="btn sm ghost" data-report-export="' + d.code + '">导出</button></div>' +
       '</div>').join('');
-    const okCount = defs.filter((d) => d.ok).length;
-    $('#panelDetail').innerHTML = '<div class="box rpt"><div class="box-head"><div><h3>报告</h3><p class="sub">' + b.id + ' · ' + s.label + ' ' + versionOf(cfg) + ' · 切片日 ' + (cfg.sliceDate || s.sliceDate) + ' · 共 ' + defs.length + ' 份，已生成 ' + okCount + ' 份</p></div>' +
-      '<button class="btn sm ghost" data-report-all>导出全部</button></div>' +
-      '<div class="rpt-list">' + rows + '</div>' +
-      '<div class="rpt-note">报告模板与区块来自 DE 生产配置（生产跑批四报表 + Final Limit），事件报告为本批次运行态报告。</div></div>';
+    $('#panelDetail').innerHTML = '<div class="box rpt">' + head + '<div class="rpt-list">' + rows + '</div>' +
+      '<div class="rpt-note">报告清单来自 DE 生产配置：产品 MoMoAdvance 绑定 4 个报告模板（t_risk_report_product_rel），按报告场景启用。</div>' +
+      '<div class="rpt-tpls"><div class="rpt-tpl-head">产品绑定的报告模板（4 个）</div>' + allTplRows + '</div></div>';
   }
 
   function renderEventReport() {
@@ -630,7 +642,7 @@
         row('切片日', s.sliceDate + ' ' + s.sliceTime) +
         row('客户分组', names + '（' + groups.length + ' 个）') +
         row('预计规模', wan(cfg.crowd) + ' 人 · ' + fmt(cfg.shards) + ' 分片 · 约 ' + hhmm(cfg.runMin)) +
-        row('描述', S.desc || '—') +
+        row('报告场景', S.reportScenario === 'PRE_LOAN' ? 'Pre-loan Operation' : S.reportScenario === 'IN_LOAN' ? 'Mid-loan Credit Adjustment' : 'No Report') +
       '</div>' +
       '<div class="cf-note">发起后可在执行页随时停止；已写入的分片数据不会回滚。</div>' +
       '<div class="cf-foot"><button class="btn" data-confirm-cancel>取消</button><button class="btn primary" data-confirm-go>确认发起</button></div>' +
@@ -789,6 +801,7 @@
         const st = STRATEGIES[S.strategy];
         if (!st.beta) S.versionType = 'FORMAL';
         S.version = (st.versions || [st.official])[0];
+        S.reportScenario = S.strategy === 'credit_offline' ? 'PRE_LOAN' : 'IN_LOAN';
         const ids = st.groups.map((g) => g.id);
         S.groups = S.groups.filter((id) => ids.indexOf(id) >= 0);
         if (!S.groups.length) S.groups = [ids[0]];
@@ -798,6 +811,7 @@
       if (e.target.id === 'versionSel') { S.versionType = e.target.value; renderApp(); }
       if (e.target.id === 'bizSel') { S.business = e.target.value; renderApp(); }
       if (e.target.id === 'verSel') { S.version = e.target.value; renderApp(); }
+      if (e.target.id === 'reportSel') { S.reportScenario = e.target.value; renderApp(); }
       if (e.target.id === 'batchName') S.batchName = e.target.value;
       if (e.target.id === 'batchDesc') S.desc = e.target.value;
       if (e.target.id === 'gSearch') { S.gsearch = e.target.value; renderApp(); const i = $('#gSearch'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
