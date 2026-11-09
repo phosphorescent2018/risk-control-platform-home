@@ -67,7 +67,7 @@
   const S = {
     view: 'create', tab: 'run', batchId: null,
     strategy: 'credit_offline', business: 'MTN_Uganda', version: 'v20', versionType: 'FORMAL', batchName: '', desc: '',
-    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, sliceDate: '', reportView: 'list', reports: [], rptCompare: {}, webhook: '', notifyEvents: [], confirmOpen: false, groupOpen: false, groupUp: false, pushArm: false, mcat: 'inc',
+    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, sliceDate: '', scheduleMode: 'now', scheduleAt: '', scheduleRepeat: 'none', reportView: 'list', reports: [], rptCompare: {}, webhook: '', notifyEvents: [], confirmOpen: false, groupOpen: false, groupUp: false, pushArm: false, mcat: 'inc',
     pickerDraft: [], pickerSearch: '', running: false, pct: 0, timer: null, lastShard: -1
   };
 
@@ -115,6 +115,7 @@
 
   function batchState(b) {
     if (!b) return { t: '未开始', c: '' };
+    if (b.status === 'scheduled') return { t: '已排期', c: 'na' };
     if (b.status === 'running') return { t: '执行中', c: 'running' };
     if (b.status === 'stopped') return { t: '已停止', c: '' };
     return { t: '已完成', c: '' };
@@ -264,6 +265,13 @@
         field('策略版本<i class="req">*</i>', sel('verSel', verOpts)) +
         field('切片日期<i class="req">*</i>', '<input class="input" type="date" id="sliceInput" min="' + dateISO(addDays(new Date(), -11)) + '" max="' + dateISO(addDays(new Date(), -2)) + '" value="' + (S.sliceDate || '') + '">') +
         field('批次名称<i class="req">*</i>', '<input class="input" id="batchName" placeholder="例如：贷前-' + dateISO(new Date()).slice(5).replace('-', '') + '" value="' + (S.batchName || '').replace(/"/g, '&quot;') + '">') +
+      '</div>' +
+      '<div class="form-sec"><div class="form-sec-head"><b>调度</b><span class="fs-sub">立即执行，或指定时间自动跑批</span></div>' +
+        '<div class="grid3">' +
+          field('触发方式<i class="req">*</i>', '<div class="seg"><button data-sched="now" class="' + (S.scheduleMode === 'now' ? 'on' : '') + '">立即执行</button><button data-sched="at" class="' + (S.scheduleMode === 'at' ? 'on' : '') + '">定时执行</button></div>') +
+          (S.scheduleMode === 'at' ? field('执行时间<i class="req">*</i>', '<input class="input" type="datetime-local" id="schedAt" value="' + (S.scheduleAt || '') + '">') : '') +
+          (S.scheduleMode === 'at' ? field('重复', '<div class="selwrap"><select class="input select" id="schedRepeat"><option value="none"' + (S.scheduleRepeat === 'none' ? ' selected' : '') + '>不重复</option><option value="daily"' + (S.scheduleRepeat === 'daily' ? ' selected' : '') + '>每天</option><option value="weekly"' + (S.scheduleRepeat === 'weekly' ? ' selected' : '') + '>每周</option></select>' + chev + '</div>') : '') +
+        '</div>' +
       '</div>' +
       '<div class="field" style="margin-top:12px"><label>报告<span class="lbl-note">可多选，不选则不生成报告；勾选后需填写对比批次</span></label>' +
         '<div class="rpt-rows">' + REPORT_DEFS.map((d) => {
@@ -677,13 +685,14 @@
     const names = groups.map((g) => g.name).join('、');
     const row = (k, v) => '<div class="cf-row"><span>' + k + '</span><b>' + v + '</b></div>';
     return '<div class="modal-mask" data-confirm-mask><div class="confirm">' +
-      '<div class="cf-head"><h3>确认发起跑批</h3><p>请核对以下配置，确认后将立即校验切片并开始跑批</p></div>' +
+      '<div class="cf-head"><h3>确认发起跑批</h3><p>' + (S.scheduleMode === 'at' ? '请核对以下配置，确认后将按设定时间自动跑批' : '请核对以下配置，确认后将立即校验切片并开始跑批') + '</p></div>' +
       '<div class="cf-body">' +
         row('业务线', 'MTN_Uganda') +
         row('策略', s.label + ' · ' + s.scene) +
         row('版本', (S.versionType === 'FORMAL' ? 'Official' : 'Test') + ' · ' + S.version) +
         row('批次名称', S.batchName || '—') +
         row('切片日', (S.sliceDate || s.sliceDate) + ' ' + s.sliceTime) +
+        row('触发方式', S.scheduleMode === 'at' ? '定时执行 · ' + (S.scheduleAt || '未选时间').replace('T', ' ') + (S.scheduleRepeat === 'daily' ? ' · 每天' : S.scheduleRepeat === 'weekly' ? ' · 每周' : '') : '立即执行') +
         row('客户分组', names + '（' + groups.length + ' 个）') +
         row('预计规模', wan(cfg.crowd) + ' 人') +
         row('报告', S.reports.length ? S.reports.map((c) => (REPORT_DEFS.find((d) => d.code === c) || {}).name).join('、') : '不生成') +
@@ -723,6 +732,15 @@
     if (!S.batchName.trim()) { toast('请填写批次名称'); const el = $('#batchName'); if (el) el.focus(); return; }
     const cfg = snap();
     if (cfg.crowd <= 0) { toast('至少选择一个客户分组'); return; }
+    if (S.scheduleMode === 'at') {
+      if (!S.scheduleAt) { toast('请选择执行时间'); return; }
+      const b0 = { id: nextBatchId(), name: S.batchName.trim(), desc: '', status: 'scheduled', started: S.scheduleAt.replace('T', ' ') + ':00', ended: '', config: cfg, pushStep: 0, pushBatch: null, pushedAt: null, pct: 0, retries: 0, failShards: 0, repeat: S.scheduleRepeat };
+      BATCHES.unshift(b0);
+      S.view = 'list'; renderApp();
+      toast('已创建定时跑批：' + b0.started + (S.scheduleRepeat === 'daily' ? '（每天）' : S.scheduleRepeat === 'weekly' ? '（每周）' : ''));
+      S.batchName = '';
+      return;
+    }
     const b = { id: nextBatchId(), name: S.batchName.trim(), desc: S.desc.trim(), status: 'running', started: nowText(), ended: '', config: cfg, pushStep: 0, pushBatch: null, pushedAt: null, pct: 0, retries: 0, failShards: 0 };
     BATCHES.unshift(b);
     S.batchId = b.id; S.view = 'detail'; S.tab = 'run'; S.running = true; S.pct = 0; S.lastShard = -1;
@@ -851,6 +869,8 @@
       if (e.target.closest('[data-report-soon]')) { toast('该报告模板待接入（' + e.target.closest('[data-report-soon]').dataset.reportSoon + '）'); return; }
       if (e.target.closest('[data-report-export]')) { toast('导出任务已创建（演示）'); return; }
       if (e.target.closest('[data-report-all]')) { toast('已提交全部报告导出（演示）'); return; }
+      const sc = e.target.closest('[data-sched]');
+      if (sc) { S.scheduleMode = sc.dataset.sched; renderApp(); return; }
       const mcat = e.target.closest('[data-mcat]');
       if (mcat) { S.mcat = mcat.dataset.mcat; renderApp(); return; }
       const mcell = e.target.closest('[data-mcell]');
@@ -897,6 +917,8 @@
       if (e.target.id === 'bizSel') { S.business = e.target.value; renderApp(); }
       if (e.target.id === 'verSel') { S.version = e.target.value; renderApp(); }
       if (e.target.id === 'batchName') S.batchName = e.target.value;
+      if (e.target.id === 'schedAt') S.scheduleAt = e.target.value;
+      if (e.target.id === 'schedRepeat') S.scheduleRepeat = e.target.value;
       if (e.target.id === 'sliceInput') { S.sliceDate = e.target.value; S.selDay = e.target.value; renderApp(); }
       if (e.target.id === 'webhook') S.webhook = e.target.value;
       if (e.target.dataset && e.target.dataset.cmp) S.rptCompare[e.target.dataset.cmp] = e.target.value;
