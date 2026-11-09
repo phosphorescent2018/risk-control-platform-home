@@ -247,7 +247,7 @@
     const q = (S.gsearch || '').trim().toLowerCase();
     const listRows = s.groups.filter((g) => !q || g.name.toLowerCase().includes(q)).map((g) => {
       const on = S.groups.includes(g.id);
-      return '<button class="gopt ' + (on ? 'on' : '') + '" data-gtoggle="' + g.id + '" title="' + g.updated + ' · ' + g.desc + '"><span class="box"></span><span class="nm">' + g.name + '</span><span class="num">' + fmt(g.crowd) + '</span></button>';
+      return '<button class="gopt ' + (on ? 'on' : '') + '" data-gtoggle="' + g.id + '" title="' + g.updated + ' · ' + g.desc + '"><span class="cbx"></span><span class="nm">' + g.name + '</span><span class="num">' + fmt(g.crowd) + '</span></button>';
     }).join('') || '<div class="gp-empty">没有匹配的分组</div>';
     const field = (label, inner, cls) => '<div class="field ' + (cls || '') + '"><label>' + label + '</label>' + inner + '</div>';
     return '<section class="box form-box">' +
@@ -262,15 +262,16 @@
         field('批次名称<i class="req">*</i>', '<input class="input" id="batchName" placeholder="例如：贷前-' + dateISO(new Date()).slice(5).replace('-', '') + '" value="' + (S.batchName || '').replace(/"/g, '&quot;') + '">') +
       '</div>' +
       '<div class="field" style="margin-top:12px"><label>报告<span class="lbl-note">可多选，不选则不生成报告</span></label>' +
-        '<div class="rpt-checks">' + REPORT_DEFS.map((d) => '<button class="rpt-check' + (S.reports.indexOf(d.code) >= 0 ? ' on' : '') + '" data-rpt="' + d.code + '"><span class="box"></span><span class="nm">' + d.name + '</span></button>').join('') + '</div>' +
+        '<div class="rpt-checks">' + REPORT_DEFS.map((d) => '<button class="rpt-check' + (S.reports.indexOf(d.code) >= 0 ? ' on' : '') + '" data-rpt="' + d.code + '"><span class="cbx"></span><span class="nm">' + d.name + '</span></button>').join('') + '</div>' +
       '</div>' +
       '<div class="field" style="margin-top:14px"><label>客户分组<i class="req">*</i></label>' +
         '<div class="gblock' + (S.groupOpen ? ' open' : '') + '">' +
         '<div class="gsel">' +
-          '<button class="gsel-box' + (S.groupOpen ? ' open' : '') + '" data-gopen>' +
+          '<div class="gsel-box' + (S.groupOpen ? ' open' : '') + '" data-gopen>' +
             '<div class="gchips">' + (selChips || '<span class="gsel-ph">选择客户分组</span>') + '</div>' +
+            '<button class="gadd" data-gopen><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 2.2v7.6M2.2 6h7.6"/></svg>' + (S.groupOpen ? '收起' : '添加分组') + '</button>' +
             '<svg class="gsel-chev" viewBox="0 0 10 6" fill="none" style="transform:translateY(-50%) rotate(' + (S.groupOpen ? 180 : 0) + 'deg)"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-          '</button>' +
+          '</div>' +
           (S.groupOpen ? '<div class="gpop' + (S.groupUp ? ' up' : '') + '">' +
             '<div class="gp-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.2"/><path d="M16 16l4.5 4.5" stroke-linecap="round"/></svg><input id="gSearch" placeholder="搜索分组名称" value="' + (S.gsearch || '').replace(/"/g, '&quot;') + '"></div>' +
             '<div class="gpop-list">' + listRows + '</div>' +

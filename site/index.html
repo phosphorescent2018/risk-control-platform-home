@@ -487,9 +487,9 @@ button.gitem { cursor:pointer; text-align:left; }
 .gopt { display:flex; align-items:center; gap:9px; padding:7px 8px; border-radius:7px; border:none; background:none; font:inherit; font-size:11.5px; cursor:pointer; text-align:left; color:var(--ink); }
 .gopt:hover { background:#F5F8FE; }
 .gopt.on { background:#F2F7FF; }
-.gopt .box { width:13px; height:13px; border:1px solid #C9D2E2; border-radius:3px; flex:0 0 13px; position:relative; }
-.gopt.on .box { background:var(--blue); border-color:var(--blue); }
-.gopt.on .box:after { content:''; position:absolute; left:4px; top:2px; width:3px; height:6px; border:solid #fff; border-width:0 1.5px 1.5px 0; transform:rotate(45deg); }
+.gopt .cbx { width:13px; height:13px; border:1px solid #C9D2E2; border-radius:3px; flex:0 0 13px; position:relative; }
+.gopt.on .cbx { background:var(--blue); border-color:var(--blue); }
+.gopt.on .cbx:after { content:''; position:absolute; left:4px; top:2px; width:3px; height:6px; border:solid #fff; border-width:0 1.5px 1.5px 0; transform:rotate(45deg); }
 .gopt .nm { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .gopt .num { color:var(--muted); font-variant-numeric:tabular-nums; }
 .gpop-foot { display:flex; align-items:center; gap:10px; border-top:1px solid #F0F2F7; margin-top:8px; padding-top:8px; font-size:10.5px; color:var(--muted); }
@@ -607,10 +607,15 @@ button.gitem { cursor:pointer; text-align:left; }
 .rpt-checks { display:grid; grid-template-columns:1fr 1fr; gap:2px 18px; border:1px solid var(--line); border-radius:8px; padding:10px 12px; background:#fff; }
 .rpt-check { display:flex; align-items:center; gap:8px; padding:6px 4px; border:none; background:none; font:inherit; font-size:11px; color:var(--ink); text-align:left; cursor:pointer; border-radius:6px; }
 .rpt-check:hover { background:#F7FAFF; }
-.rpt-check .box { width:13px; height:13px; flex:0 0 13px; border:1px solid #C9D2E2; border-radius:3px; position:relative; }
-.rpt-check.on .box { background:var(--blue); border-color:var(--blue); }
-.rpt-check.on .box:after { content:''; position:absolute; left:4px; top:2px; width:3px; height:6px; border:solid #fff; border-width:0 1.5px 1.5px 0; transform:rotate(45deg); }
+.rpt-check .cbx { width:13px; height:13px; flex:0 0 13px; border:1px solid #C9D2E2; border-radius:3px; position:relative; }
+.rpt-check.on .cbx { background:var(--blue); border-color:var(--blue); }
+.rpt-check.on .cbx:after { content:''; position:absolute; left:4px; top:2px; width:3px; height:6px; border:solid #fff; border-width:0 1.5px 1.5px 0; transform:rotate(45deg); }
 .rpt-check .nm { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.gsel-box { cursor:pointer; }
+.gadd { display:inline-flex; align-items:center; gap:4px; height:24px; padding:0 9px; margin-left:2px; border:1px dashed #B9CDF0; border-radius:6px; background:#F7FAFF; color:var(--blue-deep); font:inherit; font-size:10.5px; cursor:pointer; flex:0 0 auto; }
+.gadd:hover { background:#EEF5FF; border-color:#9DBCEC; }
+.gadd svg { width:10px; height:10px; }
 
 </style>
 </head>
@@ -934,7 +939,7 @@ button.gitem { cursor:pointer; text-align:left; }
     const q = (S.gsearch || '').trim().toLowerCase();
     const listRows = s.groups.filter((g) => !q || g.name.toLowerCase().includes(q)).map((g) => {
       const on = S.groups.includes(g.id);
-      return '<button class="gopt ' + (on ? 'on' : '') + '" data-gtoggle="' + g.id + '" title="' + g.updated + ' · ' + g.desc + '"><span class="box"></span><span class="nm">' + g.name + '</span><span class="num">' + fmt(g.crowd) + '</span></button>';
+      return '<button class="gopt ' + (on ? 'on' : '') + '" data-gtoggle="' + g.id + '" title="' + g.updated + ' · ' + g.desc + '"><span class="cbx"></span><span class="nm">' + g.name + '</span><span class="num">' + fmt(g.crowd) + '</span></button>';
     }).join('') || '<div class="gp-empty">没有匹配的分组</div>';
     const field = (label, inner, cls) => '<div class="field ' + (cls || '') + '"><label>' + label + '</label>' + inner + '</div>';
     return '<section class="box form-box">' +
@@ -949,15 +954,16 @@ button.gitem { cursor:pointer; text-align:left; }
         field('批次名称<i class="req">*</i>', '<input class="input" id="batchName" placeholder="例如：贷前-' + dateISO(new Date()).slice(5).replace('-', '') + '" value="' + (S.batchName || '').replace(/"/g, '&quot;') + '">') +
       '</div>' +
       '<div class="field" style="margin-top:12px"><label>报告<span class="lbl-note">可多选，不选则不生成报告</span></label>' +
-        '<div class="rpt-checks">' + REPORT_DEFS.map((d) => '<button class="rpt-check' + (S.reports.indexOf(d.code) >= 0 ? ' on' : '') + '" data-rpt="' + d.code + '"><span class="box"></span><span class="nm">' + d.name + '</span></button>').join('') + '</div>' +
+        '<div class="rpt-checks">' + REPORT_DEFS.map((d) => '<button class="rpt-check' + (S.reports.indexOf(d.code) >= 0 ? ' on' : '') + '" data-rpt="' + d.code + '"><span class="cbx"></span><span class="nm">' + d.name + '</span></button>').join('') + '</div>' +
       '</div>' +
       '<div class="field" style="margin-top:14px"><label>客户分组<i class="req">*</i></label>' +
         '<div class="gblock' + (S.groupOpen ? ' open' : '') + '">' +
         '<div class="gsel">' +
-          '<button class="gsel-box' + (S.groupOpen ? ' open' : '') + '" data-gopen>' +
+          '<div class="gsel-box' + (S.groupOpen ? ' open' : '') + '" data-gopen>' +
             '<div class="gchips">' + (selChips || '<span class="gsel-ph">选择客户分组</span>') + '</div>' +
+            '<button class="gadd" data-gopen><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 2.2v7.6M2.2 6h7.6"/></svg>' + (S.groupOpen ? '收起' : '添加分组') + '</button>' +
             '<svg class="gsel-chev" viewBox="0 0 10 6" fill="none" style="transform:translateY(-50%) rotate(' + (S.groupOpen ? 180 : 0) + 'deg)"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-          '</button>' +
+          '</div>' +
           (S.groupOpen ? '<div class="gpop' + (S.groupUp ? ' up' : '') + '">' +
             '<div class="gp-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.2"/><path d="M16 16l4.5 4.5" stroke-linecap="round"/></svg><input id="gSearch" placeholder="搜索分组名称" value="' + (S.gsearch || '').replace(/"/g, '&quot;') + '"></div>' +
             '<div class="gpop-list">' + listRows + '</div>' +
