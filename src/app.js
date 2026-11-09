@@ -228,6 +228,16 @@
     return '<div class="cd-head"><b>' + day + '</b><span>' + ok + '/3 源就绪</span><span>·</span><span>59 项检查 ' + (ok === 3 ? '59/59 通过' : (56 + ok) + '/59 通过') + '</span></div><div class="cd-grid">' + cards + '</div>';
   }
 
+  function schedExtraFields() {
+    if (S.scheduleMode !== 'at') return '';
+    const chev2 = '<svg class="chev" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    return '<div class="field"><label>执行时间<i class="req">*</i></label><input class="input" type="datetime-local" id="schedAt" value="' + (S.scheduleAt || '') + '"></div>' +
+      '<div class="field"><label>重复</label><div class="selwrap"><select class="input select" id="schedRepeat">' +
+      '<option value="none"' + (S.scheduleRepeat === 'none' ? ' selected' : '') + '>不重复</option>' +
+      '<option value="daily"' + (S.scheduleRepeat === 'daily' ? ' selected' : '') + '>每天</option>' +
+      '<option value="weekly"' + (S.scheduleRepeat === 'weekly' ? ' selected' : '') + '>每周</option></select>' + chev2 + '</div></div>';
+  }
+
   function renderConfigForm() {
     const s = cur();
     const cfg = snap();
@@ -269,8 +279,7 @@
       '<div class="form-sec"><div class="form-sec-head"><b>调度</b></div>' +
         '<div class="grid3">' +
           field('触发方式<i class="req">*</i>', '<div class="seg"><button data-sched="now" class="' + (S.scheduleMode === 'now' ? 'on' : '') + '">立即执行</button><button data-sched="at" class="' + (S.scheduleMode === 'at' ? 'on' : '') + '">定时执行</button></div>') +
-          (S.scheduleMode === 'at' ? field('执行时间<i class="req">*</i>', '<input class="input" type="datetime-local" id="schedAt" value="' + (S.scheduleAt || '') + '">') : '') +
-          (S.scheduleMode === 'at' ? field('重复', '<div class="selwrap"><select class="input select" id="schedRepeat"><option value="none"' + (S.scheduleRepeat === 'none' ? ' selected' : '') + '>不重复</option><option value="daily"' + (S.scheduleRepeat === 'daily' ? ' selected' : '') + '>每天</option><option value="weekly"' + (S.scheduleRepeat === 'weekly' ? ' selected' : '') + '>每周</option></select>' + chev + '</div>') : '') +
+          '<div id="schedExtra" style="display:contents">' + schedExtraFields() + '</div>' +
         '</div>' +
       '</div>' +
       '<div class="field" style="margin-top:14px"><label>客户分组<i class="req">*</i></label>' +
@@ -892,7 +901,13 @@
       if (e.target.closest('[data-report-export]')) { toast('导出任务已创建（演示）'); return; }
       if (e.target.closest('[data-report-all]')) { toast('已提交全部报告导出（演示）'); return; }
       const sc = e.target.closest('[data-sched]');
-      if (sc) { S.scheduleMode = sc.dataset.sched; renderApp(); return; }
+      if (sc) {
+        S.scheduleMode = sc.dataset.sched;
+        document.querySelectorAll('[data-sched]').forEach(function (b) { b.classList.toggle('on', b.dataset.sched === S.scheduleMode); });
+        const ex = document.getElementById('schedExtra');
+        if (ex) ex.innerHTML = schedExtraFields();
+        return;
+      }
       const mcat = e.target.closest('[data-mcat]');
       if (mcat) { S.mcat = mcat.dataset.mcat; renderApp(); return; }
       const mcell = e.target.closest('[data-mcell]');
