@@ -67,7 +67,7 @@
   const S = {
     view: 'list', tab: 'run', batchId: null,
     strategy: 'credit_offline', business: 'MTN_Uganda', version: 'v20', versionType: 'FORMAL', batchName: '', desc: '',
-    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, sliceDate: '', scheduleMode: 'now', scheduleAt: '', scheduleRepeat: 'none', reportView: 'list', reports: [], rptCompare: {}, webhook: '', notifyEvents: [], confirmOpen: false, groupOpen: false, groupUp: false, pushArm: false, mcat: 'inc',
+    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, sliceDate: '', page: 1, pageSize: 10, scheduleMode: 'now', scheduleAt: '', scheduleRepeat: 'none', reportView: 'list', reports: [], rptCompare: {}, webhook: '', notifyEvents: [], confirmOpen: false, groupOpen: false, groupUp: false, pushArm: false, mcat: 'inc',
     pickerDraft: [], pickerSearch: '', running: false, pct: 0, timer: null, lastShard: -1
   };
 
@@ -163,7 +163,11 @@
 
   /* ---------- list ---------- */
   function renderList() {
-    const rows = BATCHES.map((b) => {
+    const total = BATCHES.length;
+    const pages = Math.max(1, Math.ceil(total / S.pageSize));
+    if (S.page > pages) S.page = pages;
+    const start = (S.page - 1) * S.pageSize;
+    const rows = BATCHES.slice(start, start + S.pageSize).map((b) => {
       const st = batchState(b), ps = pushState(b);
       const s = STRATEGIES[b.config.strategy];
       const dur = b.status === 'running' ? '—' : hhmm(totalMin(b.config));
@@ -178,7 +182,12 @@
         '<td><span class="tag ' + ps.c + '">' + ps.t + '</span></td>' +
         '</tr>';
     }).join('');
-    $('#panelList').innerHTML = renderReadiness() + '<div class="box" style="margin-top:14px"><div class="box-head"><div><h3>批次列表</h3><p class="sub">共 ' + BATCHES.length + ' 个批次 · 点击任意一行查看进度与报告</p></div></div>' + '<table class="batch-table"><thead><tr><th>批次名称</th><th>批次号</th><th>策略</th><th>切片日</th><th class="r">人数</th><th>状态</th><th class="r">耗时</th><th>推送</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    $('#panelList').innerHTML = renderReadiness() + '<div class="box" style="margin-top:14px"><div class="box-head"><div><h3>批次列表</h3><p class="sub">共 ' + BATCHES.length + ' 个批次 · 点击任意一行查看进度与报告</p></div></div>' + '<table class="batch-table"><thead><tr><th>批次名称</th><th>批次号</th><th>策略</th><th>切片日</th><th class="r">人数</th><th>状态</th><th class="r">耗时</th><th>推送</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+      '<div class="pager"><span>共 ' + total + ' 条</span><span class="sp"></span>' +
+      '<select class="input pgsize" id="pageSize">' + [10, 20, 50].map(function (n) { return '<option value="' + n + '"' + (n === S.pageSize ? ' selected' : '') + '>' + n + ' 条/页</option>'; }).join('') + '</select>' +
+      '<button class="pgbtn" data-page="prev"' + (S.page <= 1 ? ' disabled' : '') + '>‹</button>' +
+      Array.from({ length: pages }, function (_, i) { return '<button class="pgbtn' + (i + 1 === S.page ? ' on' : '') + '" data-page="' + (i + 1) + '">' + (i + 1) + '</button>'; }).join('') +
+      '<button class="pgbtn" data-page="next"' + (S.page >= pages ? ' disabled' : '') + '>›</button></div></div>';
   }
 
   /* ---------- create ---------- */
@@ -848,6 +857,9 @@
     document.addEventListener('click', function (e) {
       const nav = e.target.closest('[data-nav]');
       if (nav) { if (nav.dataset.nav === 'create') { S.batchName = ''; S.desc = ''; S.view = 'create'; } else { S.view = 'list'; } renderApp(); return; }
+      const pg = e.target.closest('[data-page]');
+      if (pg) { const v = pg.dataset.page; if (v === 'prev') S.page = Math.max(1, S.page - 1); else if (v === 'next') S.page = S.page + 1; else S.page = +v; renderApp(); return; }
+      if (e.target.id === 'pageSize') { S.pageSize = +e.target.value; S.page = 1; renderApp(); return; }
       if (e.target.closest('[data-new]')) { S.batchName = ''; S.desc = ''; S.view = 'create'; renderApp(); return; }
       if (e.target.closest('[data-back]')) { S.view = 'list'; renderApp(); return; }
       const row = e.target.closest('[data-open]');

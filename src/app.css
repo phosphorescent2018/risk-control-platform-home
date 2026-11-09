@@ -723,3 +723,11 @@ button.gitem { cursor:pointer; text-align:left; }
 .pdf-side b { display:block; font-size:12px; color:var(--ink); }
 .pdf-side span { display:block; margin:4px 0 10px; font-size:10px; color:var(--muted); }
 .cd-meta .sp { flex:1; }
+
+.pager { display:flex; align-items:center; gap:8px; padding:12px 4px 2px; font-size:10.5px; color:var(--muted); }
+.pager .sp { flex:1; }
+.pgsize { width:88px; height:26px; font-size:10.5px; }
+.pgbtn { min-width:26px; height:26px; border:1px solid var(--line); background:#fff; border-radius:6px; font:inherit; font-size:10.5px; color:var(--ink); cursor:pointer; padding:0 6px; }
+.pgbtn:hover:not(:disabled) { border-color:#C7D7F2; color:var(--blue-deep); }
+.pgbtn.on { background:var(--blue); border-color:var(--blue); color:#fff; }
+.pgbtn:disabled { color:#C3CBD8; cursor:not-allowed; background:#FAFBFD; }
