@@ -230,12 +230,7 @@
 
   function schedExtraFields() {
     if (S.scheduleMode !== 'at') return '';
-    const chev2 = '<svg class="chev" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-    return '<div class="field"><label>执行时间<i class="req">*</i></label><input class="input" type="datetime-local" id="schedAt" value="' + (S.scheduleAt || '') + '"></div>' +
-      '<div class="field"><label>重复</label><div class="selwrap"><select class="input select" id="schedRepeat">' +
-      '<option value="none"' + (S.scheduleRepeat === 'none' ? ' selected' : '') + '>不重复</option>' +
-      '<option value="daily"' + (S.scheduleRepeat === 'daily' ? ' selected' : '') + '>每天</option>' +
-      '<option value="weekly"' + (S.scheduleRepeat === 'weekly' ? ' selected' : '') + '>每周</option></select>' + chev2 + '</div></div>';
+    return '<div class="field"><label>执行时间<i class="req">*</i></label><input class="input" type="datetime-local" id="schedAt" value="' + (S.scheduleAt || '') + '"></div>';
   }
 
   function renderConfigForm() {
@@ -723,7 +718,7 @@
         row('版本', (S.versionType === 'FORMAL' ? 'Official' : 'Test') + ' · ' + S.version) +
         row('批次名称', S.batchName || '—') +
         row('切片日', (S.sliceDate || s.sliceDate) + ' ' + s.sliceTime) +
-        row('触发方式', S.scheduleMode === 'at' ? '定时执行 · ' + (S.scheduleAt || '未选时间').replace('T', ' ') + (S.scheduleRepeat === 'daily' ? ' · 每天' : S.scheduleRepeat === 'weekly' ? ' · 每周' : '') : '立即执行') +
+        row('触发方式', S.scheduleMode === 'at' ? '定时执行 · ' + (S.scheduleAt || '未选时间').replace('T', ' ') : '立即执行') +
         row('客户分组', names + '（' + groups.length + ' 个）') +
         row('预计规模', wan(cfg.crowd) + ' 人') +
         row('报告', S.reports.length ? S.reports.map((c) => (REPORT_DEFS.find((d) => d.code === c) || {}).name).join('、') : '不生成') +
@@ -768,7 +763,7 @@
       const b0 = { id: nextBatchId(), name: S.batchName.trim(), desc: '', status: 'scheduled', started: S.scheduleAt.replace('T', ' ') + ':00', ended: '', config: cfg, pushStep: 0, pushBatch: null, pushedAt: null, pct: 0, retries: 0, failShards: 0, repeat: S.scheduleRepeat };
       BATCHES.unshift(b0);
       S.view = 'list'; renderApp();
-      toast('已创建定时跑批：' + b0.started + (S.scheduleRepeat === 'daily' ? '（每天）' : S.scheduleRepeat === 'weekly' ? '（每周）' : ''));
+      toast('已创建定时跑批：' + b0.started);
       S.batchName = '';
       return;
     }
