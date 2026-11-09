@@ -575,32 +575,36 @@
       g[4][4] += diff;
       return g;
     };
-    if (!b.alloc3) b.alloc3 = {};
+    const AMT = { inc: [8000, 6000, 4000, 2500, 1500], dec: [6000, 5000, 3500, 2000, 1200], keep: [0, 0, 0, 0, 0] };
+    if (!b.sel3) b.sel3 = {};
     ['inc', 'dec', 'keep'].forEach(function (c) {
-      if (!b.alloc3[c]) b.alloc3[c] = gridOf(c).map(function (r) { return r.slice(); });
+      if (!b.sel3[c]) b.sel3[c] = TIERS3.map(function () { return ODS.map(function () { return true; }); });
     });
     const cat = S.mcat;
     const grid = gridOf(cat);
+    const yi = function (v) { return (v / 1e8).toFixed(2) + ' 亿'; };
     const rows3 = TIERS3.map(function (t, i) {
       const cells = ODS.map(function (o, j) {
-        const max = grid[i][j];
-        const val = Math.min(b.alloc3[cat][i][j], max);
-        return '<td class="mcell"><div class="mcell-in"><button class="mtx-ck' + (val > 0 ? ' on' : '') + '" data-mck="' + i + '-' + j + '"><span class="mk">' + (val > 0 ? '✓' : '') + '</span></button>' +
-          '<input class="mtx-num" type="number" min="0" max="' + max + '" value="' + val + '" data-mnum="' + i + '-' + j + '" title="最多 ' + fmt(max) + ' 人"></div></td>';
+        const on = b.sel3[cat][i][j];
+        const amt = grid[i][j] * AMT[cat][i];
+        return '<td class="mcell' + (on ? '' : ' off') + '" data-msel="' + i + '-' + j + '"><div class="mcell-in"><button class="mtx-ck' + (on ? ' on' : '') + '"><span class="mk">' + (on ? '✓' : '') + '</span></button><div class="mc-v"><b>' + fmt(grid[i][j]) + '</b><span>' + (amt ? yi(amt) : '—') + '</span></div></div></td>';
       }).join('');
-      const sum = ODS.reduce(function (a, o, j) { return a + Math.min(b.alloc3[cat][i][j], grid[i][j]); }, 0);
+      const sum = ODS.reduce(function (a, o, j) { return a + (b.sel3[cat][i][j] ? grid[i][j] : 0); }, 0);
       return '<tr><td class="tl">' + t.n + '</td>' + cells + '<td class="r sum">' + fmt(sum) + '</td></tr>';
     }).join('');
-    const colSum = ODS.map(function (o, j) { return TIERS3.reduce(function (a, t, i) { return a + Math.min(b.alloc3[cat][i][j], grid[i][j]); }, 0); });
-    const catSel = TIERS3.reduce(function (a, t, i) { return a + ODS.reduce(function (a2, o, j) { return a2 + Math.min(b.alloc3[cat][i][j], grid[i][j]); }, 0); }, 0);
-    const totOf = function (c) {
+    const colSum = ODS.map(function (o, j) { return TIERS3.reduce(function (a, t, i) { return a + (b.sel3[cat][i][j] ? grid[i][j] : 0); }, 0); });
+    const selOf = function (c) {
       const g = gridOf(c);
-      return TIERS3.reduce(function (a, t, i) { return a + ODS.reduce(function (a2, o, j) { return a2 + Math.min(b.alloc3[c][i][j], g[i][j]); }, 0); }, 0);
+      return TIERS3.reduce(function (a, t, i) { return a + ODS.reduce(function (a2, o, j) { return a2 + (b.sel3[c][i][j] ? g[i][j] : 0); }, 0); }, 0);
     };
-    const selInc = totOf('inc'), selDec = totOf('dec'), selKeep = totOf('keep');
-    const incAmt = selInc * 4500, decAmt = selDec * 2800, netAmt = incAmt - decAmt;
-    const yi = function (v) { return (v / 1e8).toFixed(2) + ' 亿'; };
-    const matrix = '<div class="box matrix"><div class="box-head"><div><h3>结果加工 · 额度矩阵</h3><p class="sub">调额方向 × opportunity_od × history_tier；勾选=全量，数字可直接改成更少的人</p></div>' +
+    const amtOf = function (c) {
+      const g = gridOf(c);
+      return TIERS3.reduce(function (a, t, i) { return a + ODS.reduce(function (a2, o, j) { return a2 + (b.sel3[c][i][j] ? g[i][j] * AMT[c][i] : 0); }, 0); }, 0);
+    };
+    const selInc = selOf('inc'), selDec = selOf('dec'), selKeep = selOf('keep');
+    const catSel = cat === 'inc' ? selInc : cat === 'dec' ? selDec : selKeep;
+    const incAmt = amtOf('inc'), decAmt = amtOf('dec'), netAmt = incAmt - decAmt;
+    const matrix = '<div class="box matrix"><div class="box-head"><div><h3>结果加工 · 额度矩阵</h3><p class="sub">调额方向 × opportunity_od × history_tier；勾选即纳入该格，金额为每人实际调整额之和</p></div>' +
       '<div class="seg small"><button data-mcat="inc" class="' + (cat === 'inc' ? 'on' : '') + '">提额</button><button data-mcat="dec" class="' + (cat === 'dec' ? 'on' : '') + '">降额</button><button data-mcat="keep" class="' + (cat === 'keep' ? 'on' : '') + '">不变</button></div></div>' +
       '<div class="mtx-tools"><span>已选 <b>' + fmt(catSel) + '</b> / 共 <b>' + fmt(CAT[cat]) + '</b> 人</span><span class="sp"></span><button class="lnk" data-mall>全选</button><button class="lnk" data-mnone>清空</button></div>' +
       '<table class="mtx mtx3"><thead><tr><th>history_tier</th>' + ODS.map(function (o) { return '<th>' + o + '</th>'; }).join('') + '<th class="r">小计</th></tr></thead><tbody>' + rows3 +
@@ -608,7 +612,8 @@
       '<div class="mtx-foot"><span>本次调整 <b>' + fmt(selInc) + '</b> 提额 · <b>' + fmt(selDec) + '</b> 降额 · <b>' + fmt(selKeep) + '</b> 不变</span>' +
       '<span class="mtx-total">本次预计调额额度 <b>' + (netAmt >= 0 ? '+' : '−') + yi(Math.abs(netAmt)) + '</b><i>提额 +' + yi(incAmt) + ' · 降额 −' + yi(decAmt) + '</i></span></div></div>';
 
-    const netAll = inc * 4500 - dec * 2800;
+    const fullAmt = function (c) { const g = gridOf(c); return TIERS3.reduce(function (a, t, i) { return a + ODS.reduce(function (a2, o, j) { return a2 + g[i][j] * AMT[c][i]; }, 0); }, 0); };
+    const netAll = fullAmt('inc') - fullAmt('dec');
     $('#panelDetail').innerHTML = matrix + '<div class="push-grid" style="margin-top:14px"><div class="box"><div class="box-head"><div><h3>调额汇总</h3><p class="sub">' + b.id + ' · ' + s.label + ' ' + versionOf(cfg) + ' · ' + hhmm(totalMin(cfg)) + '</p></div></div>' +
       '<div class="big-split four"><div class="up"><i>提额</i><b>' + wan(inc) + '</b></div><div class="down"><i>降额</i><b>' + wan(dec) + '</b></div><div><i>维持</i><b>' + wan(keep) + '</b></div><div class="net"><i>净额度变化</i><b class="' + (netAll >= 0 ? 'up' : 'down') + '">' + (netAll >= 0 ? '+' : '−') + yi(Math.abs(netAll)) + '</b></div></div>' +
       '<table class="list" style="margin-top:8px"><thead><tr><th>方向</th><th>区间</th><th class="r">人数</th><th class="r">占比</th></tr></thead><tbody>' + buckets + '</tbody></table></div>' +
@@ -776,23 +781,10 @@
       if (e.target.closest('[data-confirm-go]')) { S.confirmOpen = false; startRun(); return; }
       if (e.target.closest('[data-confirm-mask]') && !e.target.closest('.confirm')) { S.confirmOpen = false; renderApp(); return; }
       const stop = e.target.closest('[data-stop]'); if (stop) { stopRun(); return; }
-      const mck = e.target.closest('[data-mck]');
-      if (mck) {
-        const bb = currentBatch(); const p2 = mck.dataset.mck.split('-'); const i = +p2[0], j = +p2[1];
-        const mx = document.querySelector('[data-mnum="' + i + '-' + j + '"]').max;
-        bb.alloc3[S.mcat][i][j] = bb.alloc3[S.mcat][i][j] > 0 ? 0 : +mx;
-        renderApp(); return;
-      }
-      if (e.target.closest('[data-mall]')) {
-        const bb = currentBatch();
-        document.querySelectorAll('[data-mnum]').forEach(function (inp) {
-          const p3 = inp.dataset.mnum.split('-'); bb.alloc3[S.mcat][+p3[0]][+p3[1]] = +inp.max;
-        });
-        renderApp(); return;
-      }
-      if (e.target.closest('[data-mnone]')) {
-        const bb = currentBatch(); bb.alloc3[S.mcat] = bb.alloc3[S.mcat].map(function (r) { return r.map(function () { return 0; }); }); renderApp(); return;
-      }
+      const msel = e.target.closest('[data-msel]');
+      if (msel) { const bb = currentBatch(); const p2 = msel.dataset.msel.split('-'); const i = +p2[0], j = +p2[1]; bb.sel3[S.mcat][i][j] = !bb.sel3[S.mcat][i][j]; renderApp(); return; }
+      if (e.target.closest('[data-mall]')) { const bb = currentBatch(); bb.sel3[S.mcat] = bb.sel3[S.mcat].map(function (r) { return r.map(function () { return true; }); }); renderApp(); return; }
+      if (e.target.closest('[data-mnone]')) { const bb = currentBatch(); bb.sel3[S.mcat] = bb.sel3[S.mcat].map(function (r) { return r.map(function () { return false; }); }); renderApp(); return; }
       const ne = e.target.closest('[data-nevent]');
       if (ne) { const k = ne.dataset.nevent; if (S.notifyEvents.indexOf(k) >= 0) S.notifyEvents = S.notifyEvents.filter((x) => x !== k); else S.notifyEvents.push(k); renderApp(); return; }
       const rc = e.target.closest('[data-rpt]');
