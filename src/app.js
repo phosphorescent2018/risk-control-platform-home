@@ -280,6 +280,12 @@
         (cfg.groups.length ? '<div class="gmeta-list"><div class="gmeta-head"><span>分组名称</span><span>客户数</span><span>更新时间</span><span>筛选条件</span></div>' + selDetails + '</div>' : '') +
         '</div>' +
       '</div>' +
+      '<div class="form-sec"><div class="form-sec-head"><b>通知推送</b><span class="opt-tag">非必填</span><span class="fs-sub">关键节点回调到你的 webhook</span></div>' +
+        '<div class="field"><label>Webhook 地址</label><input class="input" id="webhook" placeholder="https://example.com/webhook/risk-batch" value="' + (S.webhook || '').replace(/"/g, '&quot;') + '"></div>' +
+        '<div class="field"><label>推送场景<span class="lbl-note">' + (S.webhook ? '已填地址，勾选后生效' : '填写 Webhook 后勾选生效') + '</span></label><div class="notify-grid">' +
+          NOTIFY_EVENTS.map((e) => '<button class="rpt-check' + (S.notifyEvents.indexOf(e.k) >= 0 ? ' on' : '') + '" data-nevent="' + e.k + '"><span class="cbx"></span><span class="nm">' + e.n + '</span></button>').join('') +
+        '</div></div>' +
+      '</div>' +
       '<div class="form-foot split"><div class="run-sum"><span>预计 <b>' + wan(cfg.crowd) + '</b> 人</span></div>' +
         (cfg.groups.length ? '' : '<span class="foot-hint">请选择至少一个客户分组</span>') +
         '<button class="btn primary" data-launch' + (cfg.groups.length ? '' : ' disabled') + '>发起跑批</button></div>' +
@@ -294,14 +300,6 @@
     { k: 'REPORT_FAILED', n: '报告生成失败' },
     { k: 'LMS_DONE', n: 'LMS 调额执行完成' }
   ];
-
-  function renderNotifyCard() {
-    const items = NOTIFY_EVENTS.map((e) => '<button class="rpt-check' + (S.notifyEvents.indexOf(e.k) >= 0 ? ' on' : '') + '" data-nevent="' + e.k + '"><span class="cbx"></span><span class="nm">' + e.n + '</span></button>').join('');
-    return '<section class="box notify-box"><div class="box-head"><div><h3>通知推送<span class="opt-tag">非必填</span></h3><p class="sub">在关键节点向你的 webhook 发送一条消息</p></div></div>' +
-      '<div class="field"><label>Webhook 地址</label><input class="input" id="webhook" placeholder="https://example.com/webhook/risk-batch" value="' + (S.webhook || '').replace(/"/g, '&quot;') + '"></div>' +
-      '<div class="field"><label>推送场景<span class="lbl-note">' + (S.webhook ? '已填地址，勾选后生效' : '填写 Webhook 后勾选生效') + '</span></label><div class="notify-grid">' + items + '</div></div>' +
-      '</section>';
-  }
 
   function renderReadiness() {
     const s = cur();
@@ -320,8 +318,7 @@
   }
 
   function renderCreate() {
-    $('#panelCreate').innerHTML = renderReadiness() + '<div style="margin-top:14px">' + renderConfigForm() + '</div>' +
-      '<div style="margin-top:14px">' + renderNotifyCard() + '</div>';
+    $('#panelCreate').innerHTML = renderReadiness() + '<div style="margin-top:14px">' + renderConfigForm() + '</div>';
   }
 
   /* ---------- group picker ---------- */
