@@ -595,3 +595,12 @@ button.gitem { cursor:pointer; text-align:left; }
 .rpt-tpl .bl { text-align:right; font-variant-numeric:tabular-nums; }
 .rpt-tpl .st { text-align:right; color:#B9C2D0; }
 .rpt-tpl.on .st { color:#2F8F66; }
+
+.lbl-note { margin-left:6px; font-size:9px; color:#A9B2C0; font-weight:400; }
+.rpt-checks { display:grid; grid-template-columns:1fr 1fr; gap:2px 18px; border:1px solid var(--line); border-radius:8px; padding:10px 12px; background:#fff; }
+.rpt-check { display:flex; align-items:center; gap:8px; padding:6px 4px; border:none; background:none; font:inherit; font-size:11px; color:var(--ink); text-align:left; cursor:pointer; border-radius:6px; }
+.rpt-check:hover { background:#F7FAFF; }
+.rpt-check .box { width:13px; height:13px; flex:0 0 13px; border:1px solid #C9D2E2; border-radius:3px; position:relative; }
+.rpt-check.on .box { background:var(--blue); border-color:var(--blue); }
+.rpt-check.on .box:after { content:''; position:absolute; left:4px; top:2px; width:3px; height:6px; border:solid #fff; border-width:0 1.5px 1.5px 0; transform:rotate(45deg); }
+.rpt-check .nm { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
