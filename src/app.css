@@ -546,3 +546,15 @@ button.gitem { cursor:pointer; text-align:left; }
 .gpop-foot { font-size:10px; margin-top:8px; padding-top:7px; }
 
 .gmeta-head, .gmeta { grid-template-columns:190px 110px 150px minmax(0,1fr); gap:16px; }
+
+.modal-mask { position:fixed; inset:0; background:rgba(11,20,38,.45); display:flex; align-items:center; justify-content:center; z-index:80; }
+.confirm { width:520px; max-width:calc(100vw - 40px); background:#fff; border-radius:14px; box-shadow:0 24px 64px rgba(9,20,40,.25); overflow:hidden; }
+.cf-head { padding:18px 20px 13px; border-bottom:1px solid var(--line); }
+.cf-head h3 { font-size:15px; font-weight:600; color:var(--ink); }
+.cf-head p { margin-top:4px; font-size:10.5px; color:var(--muted); }
+.cf-body { padding:10px 20px 6px; }
+.cf-row { display:flex; gap:16px; padding:6px 0; font-size:11.5px; line-height:1.5; }
+.cf-row span { flex:0 0 68px; color:var(--muted); }
+.cf-row b { font-weight:500; color:var(--ink); }
+.cf-note { margin:6px 20px 0; padding:8px 10px; background:#FFF8EC; border:1px solid #F7E3BF; border-radius:8px; font-size:10px; color:#96651A; }
+.cf-foot { display:flex; justify-content:flex-end; gap:8px; padding:14px 20px 16px; }

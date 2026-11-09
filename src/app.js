@@ -67,7 +67,7 @@
   const S = {
     view: 'list', tab: 'run', batchId: null,
     strategy: 'credit_offline', business: 'MTN_Uganda', version: 'v20', versionType: 'FORMAL', batchName: '', desc: '',
-    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, groupOpen: false, groupUp: false, pushArm: false, mcat: 'inc',
+    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, confirmOpen: false, groupOpen: false, groupUp: false, pushArm: false, mcat: 'inc',
     pickerDraft: [], pickerSearch: '', running: false, pct: 0, timer: null, lastShard: -1
   };
 
@@ -574,6 +574,30 @@
       if (S.tab === 'report') renderReport();
       if (S.tab === 'push') renderPush();
     }
+    const mr = $('#modalRoot');
+    if (mr) mr.innerHTML = S.confirmOpen ? renderConfirm() : '';
+  }
+
+  function renderConfirm() {
+    const s = cur(), cfg = snap();
+    const groups = s.groups.filter((g) => S.groups.includes(g.id));
+    const names = groups.map((g) => g.name).join('、');
+    const row = (k, v) => '<div class="cf-row"><span>' + k + '</span><b>' + v + '</b></div>';
+    return '<div class="modal-mask" data-confirm-mask><div class="confirm">' +
+      '<div class="cf-head"><h3>确认发起跑批</h3><p>请核对以下配置，确认后将立即校验切片并开始跑批</p></div>' +
+      '<div class="cf-body">' +
+        row('业务线', 'MTN_Uganda') +
+        row('策略', s.label + ' · ' + s.scene) +
+        row('版本', (S.versionType === 'FORMAL' ? 'Official' : 'Test') + ' · ' + S.version) +
+        row('批次名称', S.batchName || '—') +
+        row('切片日', s.sliceDate + ' ' + s.sliceTime) +
+        row('客户分组', names + '（' + groups.length + ' 个）') +
+        row('预计规模', wan(cfg.crowd) + ' 人 · ' + fmt(cfg.shards) + ' 分片 · 约 ' + hhmm(cfg.runMin)) +
+        row('描述', S.desc || '—') +
+      '</div>' +
+      '<div class="cf-note">发起后可在执行页随时停止；已写入的分片数据不会回滚。</div>' +
+      '<div class="cf-foot"><button class="btn" data-confirm-cancel>取消</button><button class="btn primary" data-confirm-go>确认发起</button></div>' +
+    '</div></div>';
   }
 
   function setView(view) { S.view = view; renderApp(); }
@@ -653,7 +677,7 @@
 
   /* ---------- events ---------- */
   function bind() {
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && S.groupOpen) { S.groupOpen = false; renderApp(); } });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { if (S.confirmOpen) { S.confirmOpen = false; renderApp(); } else if (S.groupOpen) { S.groupOpen = false; renderApp(); } } });
     document.addEventListener('click', function (e) {
       const nav = e.target.closest('[data-nav]');
       if (nav) { if (nav.dataset.nav === 'create') { S.batchName = ''; S.desc = ''; S.view = 'create'; } else { S.view = 'list'; } renderApp(); return; }
@@ -663,7 +687,15 @@
       if (row) { openBatch(row.dataset.open); return; }
       const tab = e.target.closest('[data-tab]');
       if (tab) { S.tab = tab.dataset.tab; renderApp(); return; }
-      const launch = e.target.closest('[data-launch]'); if (launch && !launch.disabled) { startRun(); return; }
+      const launch = e.target.closest('[data-launch]');
+      if (launch && !launch.disabled) {
+        if (!S.groups.length) { toast('请选择至少一个客户分组'); return; }
+        if (!S.batchName.trim()) { toast('请填写批次名称'); const el = $('#batchName'); if (el) el.focus(); return; }
+        S.confirmOpen = true; renderApp(); return;
+      }
+      if (e.target.closest('[data-confirm-cancel]')) { S.confirmOpen = false; renderApp(); return; }
+      if (e.target.closest('[data-confirm-go]')) { S.confirmOpen = false; startRun(); return; }
+      if (e.target.closest('[data-confirm-mask]') && !e.target.closest('.confirm')) { S.confirmOpen = false; renderApp(); return; }
       const stop = e.target.closest('[data-stop]'); if (stop) { stopRun(); return; }
       const gt = e.target.closest('[data-gtoggle]');
       if (gt) { const id = gt.dataset.gtoggle; if (S.groups.includes(id)) { S.groups = S.groups.filter((x) => x !== id); } else { S.groups.push(id); } renderApp(); return; }
