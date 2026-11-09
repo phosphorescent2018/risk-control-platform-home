@@ -212,18 +212,18 @@
       const eta = dateISO(addDays(parseISO(day), 2));
       return '<div class="cd-head"><b>' + day + '</b><span>数据未出</span><span>·</span><span>T+2，预计 ' + eta + ' 产出</span></div>' +
         '<div class="cd-grid"><div class="cd-card"><span class="cd-name">钱包变量表</span><b class="dim">—</b><span class="cd-meta"><i class="dl">—</i><span class="tag na">待出数</span></span></div>' +
-        '<div class="cd-card"><span class="cd-name">OD 变量表</span><b class="dim">—</b><span class="cd-meta"><i class="dl">—</i><span class="tag na">待出数</span></span></div>' +
+        '<div class="cd-card"><span class="cd-name">OD 变量表</span><b class="dim">—</b><span class="cd-meta"><span class="sp"></span><span class="tag na">待出数</span></span></div>' +
         '<div class="cd-card"><span class="cd-name">圈选池</span><b class="dim">—</b><span class="cd-meta"><i class="dl">—</i><span class="tag na">待出数</span></span></div></div>';
     }
     const names = ['钱包变量表', 'OD 变量表', '圈选池'], keys = ['wallet', 'od', 'pool'];
     const cards = names.map((nm, i) => {
       const v = st[keys[i]], base = s.medians[i];
       if (v === 2) {
-        return '<div class="cd-card"><span class="cd-name">' + nm + '</span><b class="dim">0</b><span class="cd-meta"><i class="dl">—</i><span class="tag bad">缺数</span></span></div>';
+        return '<div class="cd-card"><span class="cd-name">' + nm + '</span><b class="dim">0</b><span class="cd-meta"><span class="sp"></span><span class="tag bad">缺数</span></span></div>';
       }
       const count = Math.round(base * (0.985 + ((i + day.charCodeAt(9)) % 5) * 0.006));
       const delta = (count - base) / base * 100;
-      return '<div class="cd-card"><span class="cd-name">' + nm + '</span><b>' + fmt(count) + '</b><span class="cd-meta"><i class="dl">' + (delta >= 0 ? '+' : '') + delta.toFixed(1) + '%</i><span class="tag ok">就绪</span></span></div>';
+      return '<div class="cd-card"><span class="cd-name">' + nm + '</span><b>' + fmt(count) + '</b><span class="cd-meta"><span class="sp"></span><span class="tag ok">就绪</span></span></div>';
     }).join('');
     const ok = [st.wallet, st.od, st.pool].filter((v) => v === 0).length;
     return '<div class="cd-head"><b>' + day + '</b><span>' + ok + '/3 源就绪</span><span>·</span><span>59 项检查 ' + (ok === 3 ? '59/59 通过' : (56 + ok) + '/59 通过') + '</span></div><div class="cd-grid">' + cards + '</div>';

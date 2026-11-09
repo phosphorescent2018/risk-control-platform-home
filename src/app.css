@@ -722,3 +722,4 @@ button.gitem { cursor:pointer; text-align:left; }
 .pdf-chart i:nth-child(1){height:40%}.pdf-chart i:nth-child(2){height:62%}.pdf-chart i:nth-child(3){height:48%}.pdf-chart i:nth-child(4){height:72%}.pdf-chart i:nth-child(5){height:55%}.pdf-chart i:nth-child(6){height:80%}.pdf-chart i:nth-child(7){height:64%}.pdf-chart i:nth-child(8){height:88%}
 .pdf-side b { display:block; font-size:12px; color:var(--ink); }
 .pdf-side span { display:block; margin:4px 0 10px; font-size:10px; color:var(--muted); }
+.cd-meta .sp { flex:1; }
