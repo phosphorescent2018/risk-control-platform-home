@@ -67,7 +67,7 @@
   const S = {
     view: 'list', tab: 'run', batchId: null,
     strategy: 'credit_offline', versionType: 'FORMAL', batchName: '', desc: '',
-    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true,
+    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, pushArm: false, mcat: 'inc',
     pickerDraft: [], pickerSearch: '', running: false, pct: 0, timer: null, lastShard: -1
   };
 
@@ -79,11 +79,11 @@
   }
 
   const BATCHES = [
-    { id: '459_20261028091106', name: '贷前-1028', status: 'completed', started: '2026-10-28 09:11:06', ended: '2026-10-29 04:26:20', config: cfgOf('credit_offline', ['wallet_active']), pushStep: 1, pushBatch: null, pushedAt: null },
-    { id: '460_20261027085645', name: '贷中-1027', status: 'completed', started: '2026-10-27 08:56:45', ended: '2026-10-27 12:18:00', config: cfgOf('Dai_Zhong', ['loan_in']), pushStep: 1, pushBatch: null, pushedAt: null },
-    { id: '458_20261016072310', name: '贷前-1016', status: 'completed', started: '2026-10-16 07:23:10', ended: '2026-10-17 02:15:40', config: cfgOf('credit_offline', ['wallet_active']), pushStep: 5, pushBatch: 'D20261016-01', pushedAt: '2026-10-17 09:12:00' },
-    { id: '455_20261018082130', name: '贷中-1018', status: 'completed', started: '2026-10-18 08:21:30', ended: '2026-10-18 11:27:30', config: cfgOf('Dai_Zhong', ['loan_in']), pushStep: 5, pushBatch: 'D20261018-01', pushedAt: '2026-10-18 15:40:00' },
-    { id: '457_20261005064520', name: '贷前-1005', status: 'completed', started: '2026-10-05 06:45:20', ended: '2026-10-06 02:51:20', config: cfgOf('credit_offline', ['wallet_active']), pushStep: 5, pushBatch: 'D20261005-01', pushedAt: '2026-10-06 10:20:00' }
+    { retries: 12, id: '459_20261028091106', name: '贷前-1028', status: 'completed', started: '2026-10-28 09:11:06', ended: '2026-10-29 04:26:20', config: cfgOf('credit_offline', ['wallet_active']), pushStep: 1, pushBatch: null, pushedAt: null },
+    { retries: 3, id: '460_20261027085645', name: '贷中-1027', status: 'completed', started: '2026-10-27 08:56:45', ended: '2026-10-27 12:18:00', config: cfgOf('Dai_Zhong', ['loan_in']), pushStep: 1, pushBatch: null, pushedAt: null },
+    { retries: 3, id: '458_20261016072310', name: '贷前-1016', status: 'completed', started: '2026-10-16 07:23:10', ended: '2026-10-17 02:15:40', config: cfgOf('credit_offline', ['wallet_active']), pushStep: 5, pushBatch: 'D20261016-01', pushedAt: '2026-10-17 09:12:00' },
+    { retries: 0, id: '455_20261018082130', name: '贷中-1018', status: 'completed', started: '2026-10-18 08:21:30', ended: '2026-10-18 11:27:30', config: cfgOf('Dai_Zhong', ['loan_in']), pushStep: 5, pushBatch: 'D20261018-01', pushedAt: '2026-10-18 15:40:00' },
+    { retries: 1, id: '457_20261005064520', name: '贷前-1005', status: 'completed', started: '2026-10-05 06:45:20', ended: '2026-10-06 02:51:20', config: cfgOf('credit_offline', ['wallet_active']), pushStep: 5, pushBatch: 'D20261005-01', pushedAt: '2026-10-06 10:20:00' }
   ];
 
   const cur = () => STRATEGIES[S.strategy];
@@ -129,7 +129,8 @@
     const cfg = b.config, s = STRATEGIES[cfg.strategy];
     const groups = s.groups.filter((g) => cfg.groups.includes(g.id)).map((g) => g.name).join('、');
     const st = batchState(b);
-    return '<div class="ws-top"><div class="ws-left"><button class="back" data-back>‹ 跑批记录</button><div class="ws-h1">' + (b.name || b.id) + '</div><span class="badge ' + st.c + '">' + st.t + '</span></div>' +
+    return '<div class="ws-back-row"><button class="back" data-back>‹ 跑批记录</button></div>' +
+      '<div class="ws-top"><div class="ws-left"><div class="ws-h1">' + (b.name || b.id) + '</div><span class="badge ' + st.c + '">' + st.t + '</span></div>' +
       '<div class="ws-right"><div class="slice-chip"><span>切片日</span><b>' + s.sliceDate + '</b><i>' + s.sliceTime + '</i></div></div></div>' +
       '<div class="ws-meta">' + b.id + ' · ' + s.label + ' ' + versionOf(cfg) + ' · ' + groups + ' · ' + b.started + (b.ended ? ' → ' + b.ended : '') + '</div>';
   }
@@ -311,7 +312,10 @@
       '<div class="run-side">' + (running ? '<button class="btn danger" data-stop>停止跑批</button>' : '') + '<span class="muted">' + b.id + '</span></div></div>' +
       '<div class="chart-grid"><div class="box chart-box"><h3>' + (running ? '实时速度' : '跑批速度') + '</h3><p class="sub">万人/小时</p><svg id="liveChart" viewBox="0 0 520 140" height="140"></svg></div>' +
       '<div class="box"><h3>分片进度</h3><p class="sub">每格 = 1 个分片</p><canvas class="shard-canvas" id="liveShards"></canvas><div class="pctl"><span>完成 <b id="pDone">' + fmt(Math.round(cfg.shards * pct)) + '</b></span><span>失败 <b>0</b></span><span>待处理 <b id="pWait">' + fmt(cfg.shards - Math.round(cfg.shards * pct)) + '</b></span></div></div></div>' +
-      '<div class="box anomaly" style="margin-top:14px"><div class="box-head"><div><h3>异常与重试</h3></div></div><ul><li><span class="pin"></span><div><b>' + (running ? '暂无明显异常' : '无失败分片') + '</b> <span>分片按 4,000 人/片稳定推进</span></div></li></ul></div>';
+      '<div class="box anomaly" style="margin-top:14px"><div class="box-head"><div><h3>异常与重试</h3></div></div><ul>' +
+        '<li><span class="pin"></span><div><b>分片重试 ' + (b.retries || 0) + ' 次</b> <span>瞬时超时触发，重试后全部成功</span></div><span class="tag warn">已执行</span></li>' +
+        '<li><span class="pin" style="background:#DDE2EA"></span><div><b>整体重试</b> <span>' + (b.failShards > 0 ? '失败分片 ' + b.failShards + '，已自动执行整体重试' : '跑批结束后自动执行一次 · 当前失败分片 0') + '</span></div><span class="tag na">未触发</span></li>' +
+      '</ul></div>';
     drawLiveChart();
     requestAnimationFrame(function () { drawShards($('#liveShards'), cfg.shards, Math.round(cfg.shards * pct), 0, false); });
   }
@@ -476,12 +480,52 @@
       ['降额', '0 – 5 万', Math.round(dec * 0.71)], ['降额', '5 万以上', Math.round(dec * 0.29)]
     ].map((r) => '<tr><td><span class="tag ' + (r[0] === '提额' ? 'bad' : 'ok') + '">' + r[0] + '</span></td><td>' + r[1] + '</td><td class="r">' + fmt(r[2]) + '</td><td class="r">' + (r[2] / cfg.crowd * 100).toFixed(2) + '%</td></tr>').join('');
 
-    $('#panelDetail').innerHTML = '<div class="push-grid"><div class="box"><div class="box-head"><div><h3>调额汇总</h3><p class="sub">' + b.id + ' · ' + s.label + ' ' + versionOf(cfg) + ' · ' + hhmm(totalMin(cfg)) + '</p></div></div>' +
+    const MTX = {
+      tiers: ['T1 高价值', 'T2 中价值', 'T3 普通', '无层级'],
+      ods: ['可提额OD', '无OD机会'],
+      inc: [0.42, 0.05, 0.28, 0.07, 0.12, 0.02, 0.03, 0.01],
+      dec: [0.10, 0.15, 0.12, 0.20, 0.15, 0.22, 0.02, 0.04],
+      keep: [0.10, 0.16, 0.08, 0.13, 0.06, 0.19, 0.01, 0.27]
+    };
+    if (!S.mcat) S.mcat = 'inc';
+    if (!b.pushSel) b.pushSel = { inc: [true, true, true, true, true, true, true, true], dec: [true, true, true, true, true, true, true, true] };
+    const cat = S.mcat;
+    const catTotal = cat === 'inc' ? inc : cat === 'dec' ? dec : keep;
+    const counts = MTX[cat].map((f) => Math.round(catTotal * f));
+    const editable = cat !== 'keep';
+    const mrows = MTX.tiers.map((t, ti) => {
+      const cells = [0, 1].map((ci) => {
+        const i = ti * 2 + ci;
+        const n = counts[i];
+        const on = editable ? b.pushSel[cat][i] : true;
+        return '<td class="' + (editable ? 'pick ' : '') + (on ? '' : 'off') + '" ' + (editable ? 'data-mcell="' + i + '"' : '') + '>' + (editable ? '<span class="mk">' + (on ? '✓' : '') + '</span>' : '') + '<b>' + fmt(n) + '</b></td>';
+      }).join('');
+      return '<tr><td class="tl">' + t + '</td>' + cells + '<td class="r sum">' + fmt(counts[ti * 2] + counts[ti * 2 + 1]) + '</td></tr>';
+    }).join('');
+    const colSums = [0, 1].map((ci) => counts[ci] + counts[2 + ci] + counts[4 + ci] + counts[6 + ci]);
+    const incCounts = MTX.inc.map((f) => Math.round(inc * f));
+    const decCounts = MTX.dec.map((f) => Math.round(dec * f));
+    const selInc = incCounts.reduce((a, n, i) => a + (b.pushSel.inc[i] ? n : 0), 0);
+    const selDec = decCounts.reduce((a, n, i) => a + (b.pushSel.dec[i] ? n : 0), 0);
+    const incAmt = selInc * 4500, decAmt = selDec * 2800, netAmt = incAmt - decAmt;
+    const yi = (v) => (v / 1e8).toFixed(2) + ' 亿';
+    const matrix = '<div class="box matrix"><div class="box-head"><div><h3>结果加工 · 推送范围</h3><p class="sub">按 history_tier × opportunity_od 选择本次推送人群</p></div>' +
+      '<div class="seg small"><button data-mcat="inc" class="' + (cat === 'inc' ? 'on' : '') + '">提额人群</button><button data-mcat="dec" class="' + (cat === 'dec' ? 'on' : '') + '">降额人群</button><button data-mcat="keep" class="' + (cat === 'keep' ? 'on' : '') + '">额度不变人群</button></div></div>' +
+      '<table class="mtx"><thead><tr><th>客户层级</th><th>' + MTX.ods[0] + '</th><th>' + MTX.ods[1] + '</th><th class="r">小计</th></tr></thead><tbody>' + mrows +
+      '<tr class="mtx-sum"><td class="tl">合计</td><td><b>' + fmt(colSums[0]) + '</b></td><td><b>' + fmt(colSums[1]) + '</b></td><td class="r"><b>' + fmt(catTotal) + '</b></td></tr></tbody></table>' +
+      '<div class="mtx-foot"><span>' + (editable ? '已选 <b>' + fmt(selInc) + '</b> 提额 · <b>' + fmt(selDec) + '</b> 降额' : '额度不变人群不参与本次推送') + '</span>' +
+      '<span class="mtx-total">本次预计调整最终额度汇总 <b>' + (netAmt >= 0 ? '+' : '−') + yi(Math.abs(netAmt)) + '</b><i>提额 +' + yi(incAmt) + ' · 降额 −' + yi(decAmt) + '</i></span></div></div>';
+
+    $('#panelDetail').innerHTML = matrix + '<div class="push-grid" style="margin-top:14px"><div class="box"><div class="box-head"><div><h3>调额汇总</h3><p class="sub">' + b.id + ' · ' + s.label + ' ' + versionOf(cfg) + ' · ' + hhmm(totalMin(cfg)) + '</p></div></div>' +
       '<div class="big-split"><div class="up"><i>提额</i><b>' + wan(inc) + '</b></div><div class="down"><i>降额</i><b>' + wan(dec) + '</b></div><div><i>维持</i><b>' + wan(keep) + '</b></div></div>' +
       '<table class="list" style="margin-top:8px"><thead><tr><th>方向</th><th>区间</th><th class="r">人数</th><th class="r">占比</th></tr></thead><tbody>' + buckets + '</tbody></table></div>' +
       '<div class="box"><div class="box-head"><div><h3>推送至 LMS</h3><p class="sub">DE 批次 → LMS 批次 → 批量改额</p></div></div><div class="steps">' + steps + '</div>' +
       (b.pushStep === 4 ? '<span class="demo-link" data-complete>演示：模拟 LMS 完成改额</span>' : '') +
-      '<button class="btn primary wide" data-push ' + (disabled ? 'disabled' : '') + '>' + btnText + '</button></div></div>' +
+      (b.pushStep >= 3
+        ? '<button class="btn primary wide" disabled>' + (b.pushStep >= 5 ? '已改额 · 完成' : '已推送 LMS') + '</button>'
+        : (S.pushArm
+          ? '<div class="arm"><button class="btn warn wide" data-push>确认推送（再次点击）</button><span>推送后名单将写入 LMS 并等待批量改额，不可撤回</span></div>'
+          : '<button class="btn primary wide" data-push>推送至 LMS · 已选 ' + fmt(selInc + selDec) + ' 人</button>')) + '</div></div>' +
       '<div class="box" style="margin-top:14px"><div class="box-head"><div><h3>推送记录</h3></div></div><table class="list" style="margin-top:8px"><thead><tr><th>时间</th><th>LMS 批次</th><th>操作人</th><th class="r">明细条数</th><th>状态</th></tr></thead><tbody>' + recRows + '</tbody></table></div>';
   }
 
@@ -527,7 +571,7 @@
     if (!S.batchName.trim()) { toast('请填写批次名称'); const el = $('#batchName'); if (el) el.focus(); return; }
     const cfg = snap();
     if (cfg.crowd <= 0) { toast('至少选择一个客户分组'); return; }
-    const b = { id: nextBatchId(), name: S.batchName.trim(), desc: S.desc.trim(), status: 'running', started: nowText(), ended: '', config: cfg, pushStep: 0, pushBatch: null, pushedAt: null, pct: 0 };
+    const b = { id: nextBatchId(), name: S.batchName.trim(), desc: S.desc.trim(), status: 'running', started: nowText(), ended: '', config: cfg, pushStep: 0, pushBatch: null, pushedAt: null, pct: 0, retries: 0, failShards: 0 };
     BATCHES.unshift(b);
     S.batchId = b.id; S.view = 'detail'; S.tab = 'run'; S.running = true; S.pct = 0; S.lastShard = -1;
     renderApp();
@@ -589,7 +633,18 @@
       if (tab) { S.tab = tab.dataset.tab; renderApp(); return; }
       const launch = e.target.closest('[data-launch]'); if (launch && !launch.disabled) { startRun(); return; }
       const stop = e.target.closest('[data-stop]'); if (stop) { stopRun(); return; }
-      const push = e.target.closest('[data-push]'); if (push && !push.disabled) { startPush(); return; }
+      const mcat = e.target.closest('[data-mcat]');
+      if (mcat) { S.mcat = mcat.dataset.mcat; renderApp(); return; }
+      const mcell = e.target.closest('[data-mcell]');
+      if (mcell) { const b = currentBatch(); const i = +mcell.dataset.mcell; if (b && b.pushSel && b.pushSel[S.mcat]) { b.pushSel[S.mcat][i] = !b.pushSel[S.mcat][i]; renderApp(); } return; }
+      const push = e.target.closest('[data-push]');
+      if (push && !push.disabled) {
+        const b = currentBatch();
+        if (!b || b.pushStep >= 3) return;
+        if (!S.pushArm) { S.pushArm = true; renderApp(); setTimeout(function () { if (S.pushArm) { S.pushArm = false; renderApp(); } }, 6000); }
+        else { S.pushArm = false; startPush(); }
+        return;
+      }
       const comp = e.target.closest('[data-complete]'); if (comp) { completePush(); return; }
       const mock = e.target.closest('[data-mock]'); if (mock) { toast('概念版演示：' + mock.dataset.mock + ' 暂未接入'); return; }
       const day = e.target.closest('.cal-col'); if (day) { S.selDay = day.dataset.day; renderApp(); return; }
