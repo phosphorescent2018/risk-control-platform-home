@@ -194,15 +194,17 @@
     const s = cur();
     const day = S.selDay || s.sliceDate, st = dayStatus(s, day) || dayStatus(s, s.sliceDate);
     const names = ['钱包变量表', 'OD 变量表', '圈选池'], keys = ['wallet', 'od', 'pool'];
-    const rows = names.map((nm, i) => {
+    const cards = names.map((nm, i) => {
       const v = st[keys[i]], base = s.medians[i];
-      if (v === 2) return '<div class="cd-row"><span class="nm">' + nm + '</span><span class="num">0</span><span class="dl">—</span><span class="tag bad">缺数</span></div>';
+      if (v === 2) {
+        return '<div class="cd-card"><span class="cd-name">' + nm + '</span><b class="dim">0</b><span class="cd-meta"><i class="dl">—</i><span class="tag bad">缺数</span></span></div>';
+      }
       const count = Math.round(base * (0.985 + ((i + day.charCodeAt(9)) % 5) * 0.006));
       const delta = (count - base) / base * 100;
-      return '<div class="cd-row"><span class="nm">' + nm + '</span><span class="num">' + fmt(count) + '</span><span class="dl">' + (delta >= 0 ? '+' : '') + delta.toFixed(1) + '%</span><span class="tag ok">就绪</span></div>';
+      return '<div class="cd-card"><span class="cd-name">' + nm + '</span><b>' + fmt(count) + '</b><span class="cd-meta"><i class="dl">' + (delta >= 0 ? '+' : '') + delta.toFixed(1) + '%</i><span class="tag ok">就绪</span></span></div>';
     }).join('');
     const ok = [st.wallet, st.od, st.pool].filter((v) => v === 0).length;
-    return '<div class="cd-head"><b>' + day + '</b><span>' + ok + '/3 源就绪</span><span>·</span><span>59 项检查 ' + (ok === 3 ? '59/59 通过' : (56 + ok) + '/59 通过') + '</span></div>' + rows;
+    return '<div class="cd-head"><b>' + day + '</b><span>' + ok + '/3 源就绪</span><span>·</span><span>59 项检查 ' + (ok === 3 ? '59/59 通过' : (56 + ok) + '/59 通过') + '</span></div><div class="cd-grid">' + cards + '</div>';
   }
 
   function renderConfigForm() {

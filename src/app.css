@@ -490,3 +490,18 @@ button.gitem { cursor:pointer; text-align:left; }
 .gpop-foot button { background:none; border:none; font:inherit; font-size:10.5px; cursor:pointer; color:var(--blue-deep); padding:0 2px; }
 .gpop-foot button:hover { text-decoration:underline; }
 .gpop.up { top:auto; bottom:calc(100% + 6px); }
+
+.cal { gap:6px; margin-top:12px; }
+.cal-col { background:#F8FAFD; border:1px solid #F1F4F9; border-radius:8px; padding:8px 3px 7px; }
+.cal-col:hover { background:#F2F6FD; }
+.cal-col.sel { background:#fff; border-color:#BFD6FF; box-shadow:0 3px 8px rgba(80,149,255,.10); }
+.cal-d { font-size:9.5px; font-weight:600; color:#4A5872; }
+.cal-bars { gap:3px; }
+.cd-head { margin:13px 0 10px; font-size:10.5px; }
+.cd-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.cd-card { border:1px solid var(--line); border-radius:10px; padding:10px 12px 9px; background:#FBFCFE; }
+.cd-name { display:block; font-size:10px; color:var(--muted); }
+.cd-card b { display:block; margin-top:5px; font-size:17px; font-weight:600; letter-spacing:-0.2px; font-variant-numeric:tabular-nums; }
+.cd-card b.dim { color:#C2C9D6; }
+.cd-meta { display:flex; align-items:center; justify-content:space-between; margin-top:6px; font-size:10px; }
+.cd-meta .dl { font-style:normal; color:var(--muted); font-variant-numeric:tabular-nums; }

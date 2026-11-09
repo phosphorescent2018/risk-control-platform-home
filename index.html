@@ -498,6 +498,21 @@ button.gitem { cursor:pointer; text-align:left; }
 .gpop-foot button:hover { text-decoration:underline; }
 .gpop.up { top:auto; bottom:calc(100% + 6px); }
 
+.cal { gap:6px; margin-top:12px; }
+.cal-col { background:#F8FAFD; border:1px solid #F1F4F9; border-radius:8px; padding:8px 3px 7px; }
+.cal-col:hover { background:#F2F6FD; }
+.cal-col.sel { background:#fff; border-color:#BFD6FF; box-shadow:0 3px 8px rgba(80,149,255,.10); }
+.cal-d { font-size:9.5px; font-weight:600; color:#4A5872; }
+.cal-bars { gap:3px; }
+.cd-head { margin:13px 0 10px; font-size:10.5px; }
+.cd-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.cd-card { border:1px solid var(--line); border-radius:10px; padding:10px 12px 9px; background:#FBFCFE; }
+.cd-name { display:block; font-size:10px; color:var(--muted); }
+.cd-card b { display:block; margin-top:5px; font-size:17px; font-weight:600; letter-spacing:-0.2px; font-variant-numeric:tabular-nums; }
+.cd-card b.dim { color:#C2C9D6; }
+.cd-meta { display:flex; align-items:center; justify-content:space-between; margin-top:6px; font-size:10px; }
+.cd-meta .dl { font-style:normal; color:var(--muted); font-variant-numeric:tabular-nums; }
+
 </style>
 </head>
 <body>
@@ -767,15 +782,17 @@ button.gitem { cursor:pointer; text-align:left; }
     const s = cur();
     const day = S.selDay || s.sliceDate, st = dayStatus(s, day) || dayStatus(s, s.sliceDate);
     const names = ['钱包变量表', 'OD 变量表', '圈选池'], keys = ['wallet', 'od', 'pool'];
-    const rows = names.map((nm, i) => {
+    const cards = names.map((nm, i) => {
       const v = st[keys[i]], base = s.medians[i];
-      if (v === 2) return '<div class="cd-row"><span class="nm">' + nm + '</span><span class="num">0</span><span class="dl">—</span><span class="tag bad">缺数</span></div>';
+      if (v === 2) {
+        return '<div class="cd-card"><span class="cd-name">' + nm + '</span><b class="dim">0</b><span class="cd-meta"><i class="dl">—</i><span class="tag bad">缺数</span></span></div>';
+      }
       const count = Math.round(base * (0.985 + ((i + day.charCodeAt(9)) % 5) * 0.006));
       const delta = (count - base) / base * 100;
-      return '<div class="cd-row"><span class="nm">' + nm + '</span><span class="num">' + fmt(count) + '</span><span class="dl">' + (delta >= 0 ? '+' : '') + delta.toFixed(1) + '%</span><span class="tag ok">就绪</span></div>';
+      return '<div class="cd-card"><span class="cd-name">' + nm + '</span><b>' + fmt(count) + '</b><span class="cd-meta"><i class="dl">' + (delta >= 0 ? '+' : '') + delta.toFixed(1) + '%</i><span class="tag ok">就绪</span></span></div>';
     }).join('');
     const ok = [st.wallet, st.od, st.pool].filter((v) => v === 0).length;
-    return '<div class="cd-head"><b>' + day + '</b><span>' + ok + '/3 源就绪</span><span>·</span><span>59 项检查 ' + (ok === 3 ? '59/59 通过' : (56 + ok) + '/59 通过') + '</span></div>' + rows;
+    return '<div class="cd-head"><b>' + day + '</b><span>' + ok + '/3 源就绪</span><span>·</span><span>59 项检查 ' + (ok === 3 ? '59/59 通过' : (56 + ok) + '/59 通过') + '</span></div><div class="cd-grid">' + cards + '</div>';
   }
 
   function renderConfigForm() {
