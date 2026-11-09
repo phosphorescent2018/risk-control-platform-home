@@ -266,7 +266,7 @@
         field('切片日期<i class="req">*</i>', '<input class="input" type="date" id="sliceInput" min="' + dateISO(addDays(new Date(), -11)) + '" max="' + dateISO(addDays(new Date(), -2)) + '" value="' + (S.sliceDate || '') + '">') +
         field('批次名称<i class="req">*</i>', '<input class="input" id="batchName" placeholder="例如：贷前-' + dateISO(new Date()).slice(5).replace('-', '') + '" value="' + (S.batchName || '').replace(/"/g, '&quot;') + '">') +
       '</div>' +
-      '<div class="form-sec"><div class="form-sec-head"><b>调度</b><span class="fs-sub">立即执行，或指定时间自动跑批</span></div>' +
+      '<div class="form-sec"><div class="form-sec-head"><b>调度</b></div>' +
         '<div class="grid3">' +
           field('触发方式<i class="req">*</i>', '<div class="seg"><button data-sched="now" class="' + (S.scheduleMode === 'now' ? 'on' : '') + '">立即执行</button><button data-sched="at" class="' + (S.scheduleMode === 'at' ? 'on' : '') + '">定时执行</button></div>') +
           (S.scheduleMode === 'at' ? field('执行时间<i class="req">*</i>', '<input class="input" type="datetime-local" id="schedAt" value="' + (S.scheduleAt || '') + '">') : '') +
