@@ -118,12 +118,12 @@
 
   function renderHead() {
     if (S.view === 'list') {
-      return '<div class="ws-top"><div class="ws-left"><div class="ws-h1">跑批作业处理</div></div>' +
-        '<div class="ws-right"><button class="btn primary" data-new>新建跑批</button></div></div>';
+      return '<div class="ws-top"><div class="ws-left"><div class="ws-h1">跑批记录</div></div>' +
+        '<div class="ws-right"><button class="btn primary" data-new>发起跑批</button></div></div>';
     }
     if (S.view === 'create') {
       const s = cur();
-      return '<div class="ws-top"><div class="ws-left"><button class="back" data-back>‹ 跑批记录</button><div class="ws-h1">新建跑批</div></div>' +
+      return '<div class="ws-top"><div class="ws-left"><div class="ws-h1">发起跑批</div></div>' +
         '<div class="ws-right"><div class="slice-chip"><span>切片日</span><b>' + s.sliceDate + '</b><i>' + s.sliceTime + '</i></div></div></div>';
     }
     const b = currentBatch(); if (!b) return '';
@@ -249,7 +249,12 @@
   }
 
   function renderCreate() {
-    $('#panelCreate').innerHTML = renderConfigForm();
+    const s = cur();
+    const st = dayStatus(s, s.sliceDate);
+    const ok = [st.wallet, st.od, st.pool].filter((v) => v === 0).length;
+    $('#panelCreate').innerHTML = '<section class="box readiness"><div class="ready-row"><span class="ready-dot"></span><b>切片已就绪</b>' +
+      '<span class="ready-meta">切片日 ' + s.sliceDate + ' ' + s.sliceTime + ' · ' + ok + '/3 源就绪 · ' + (ok === 3 ? '59/59' : (56 + ok) + '/59') + ' 检查通过 · 7/7 表</span></div></section>' +
+      '<div style="margin-top:14px">' + renderConfigForm() + '</div>';
   }
 
   /* ---------- group picker ---------- */
@@ -473,6 +478,7 @@
 
   /* ---------- shell ---------- */
   function renderApp() {
+    $$('.subnav-item').forEach((el) => el.classList.toggle('on', el.dataset.nav === (S.view === 'create' ? 'create' : 'list')));
     $('#wsHead').innerHTML = '<div class="ws-head">' + renderHead() + '</div>';
     $('#stages').hidden = S.view !== 'detail';
     $$('.panel').forEach((el) => { el.classList.remove('active'); });
@@ -522,6 +528,7 @@
       updateRunLive();
       if (S.pct >= 1) finishRun();
     }, 220);
+    S.batchName = ''; S.desc = '';
     toast('跑批已发起：' + b.name);
   }
 
@@ -563,6 +570,8 @@
   /* ---------- events ---------- */
   function bind() {
     document.addEventListener('click', function (e) {
+      const nav = e.target.closest('[data-nav]');
+      if (nav) { if (nav.dataset.nav === 'create') { S.batchName = ''; S.desc = ''; S.view = 'create'; } else { S.view = 'list'; } renderApp(); return; }
       if (e.target.closest('[data-new]')) { S.batchName = ''; S.desc = ''; S.view = 'create'; renderApp(); return; }
       if (e.target.closest('[data-back]')) { S.view = 'list'; renderApp(); return; }
       const row = e.target.closest('[data-open]');

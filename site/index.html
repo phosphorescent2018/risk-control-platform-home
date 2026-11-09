@@ -27,6 +27,12 @@ body {
 .brand { padding:28.5px 0 0 35.5px; }
 .brand img { display:block; width:180.5px; height:auto; }
 .nav { margin-top:26.5px; }
+.subnav { display:flex; flex-direction:column; margin-top:2px; }
+.subnav-item { position:relative; height:36px; display:flex; align-items:center; padding:0 22px 0 62px; border:0; background:none; font:inherit; font-size:13px; color:var(--muted); cursor:pointer; text-align:left; }
+.subnav-item:hover { color:var(--ink); background:rgba(80,149,255,.04); }
+.subnav-item.on { color:var(--blue-deep); font-weight:500; background:#F3F8FF; }
+.subnav-item.on:before { content:''; position:absolute; left:0; top:8px; bottom:8px; width:2px; background:var(--blue); border-radius:1px; }
+
 .nav-item { height:54px; display:flex; align-items:center; padding:0 22.6px 0 27.5px; cursor:pointer; color:var(--ink); font-size:14px; line-height:1; transition:background .2s; user-select:none; }
 .nav-item:hover { background:rgba(80,149,255,.05); }
 .nav-item .ico { width:20.5px; height:20.5px; flex:0 0 20.5px; margin-right:12px; }
@@ -393,7 +399,11 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
       <div class="nav-item" role="button" tabindex="0">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="3.1"/><path d="M7 7.9h10M7 12h10M7 16.1h10"/><path d="M10.7 6.7 9 7.9l1.7 1.2z" fill="currentColor" stroke="none"/><path d="M13.3 10.8 15 12l-1.7 1.2z" fill="currentColor" stroke="none"/><path d="M10.7 15 9 16.2l1.7 1.2z" fill="currentColor" stroke="none"/></svg>
         <span class="label">跑批作业处理</span>
-        <svg class="chev" viewBox="0 0 10 6" fill="none" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="chev" viewBox="0 0 10 6" fill="none" aria-hidden="true" style="transform:rotate(180deg)"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="subnav">
+        <button class="subnav-item" data-nav="create" type="button">发起跑批</button>
+        <button class="subnav-item" data-nav="list" type="button">跑批记录</button>
       </div>
     </nav>
   </aside>
@@ -572,12 +582,12 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
 
   function renderHead() {
     if (S.view === 'list') {
-      return '<div class="ws-top"><div class="ws-left"><div class="ws-h1">跑批作业处理</div></div>' +
-        '<div class="ws-right"><button class="btn primary" data-new>新建跑批</button></div></div>';
+      return '<div class="ws-top"><div class="ws-left"><div class="ws-h1">跑批记录</div></div>' +
+        '<div class="ws-right"><button class="btn primary" data-new>发起跑批</button></div></div>';
     }
     if (S.view === 'create') {
       const s = cur();
-      return '<div class="ws-top"><div class="ws-left"><button class="back" data-back>‹ 跑批记录</button><div class="ws-h1">新建跑批</div></div>' +
+      return '<div class="ws-top"><div class="ws-left"><div class="ws-h1">发起跑批</div></div>' +
         '<div class="ws-right"><div class="slice-chip"><span>切片日</span><b>' + s.sliceDate + '</b><i>' + s.sliceTime + '</i></div></div></div>';
     }
     const b = currentBatch(); if (!b) return '';
@@ -703,7 +713,12 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 
   function renderCreate() {
-    $('#panelCreate').innerHTML = renderConfigForm();
+    const s = cur();
+    const st = dayStatus(s, s.sliceDate);
+    const ok = [st.wallet, st.od, st.pool].filter((v) => v === 0).length;
+    $('#panelCreate').innerHTML = '<section class="box readiness"><div class="ready-row"><span class="ready-dot"></span><b>切片已就绪</b>' +
+      '<span class="ready-meta">切片日 ' + s.sliceDate + ' ' + s.sliceTime + ' · ' + ok + '/3 源就绪 · ' + (ok === 3 ? '59/59' : (56 + ok) + '/59') + ' 检查通过 · 7/7 表</span></div></section>' +
+      '<div style="margin-top:14px">' + renderConfigForm() + '</div>';
   }
 
   /* ---------- group picker ---------- */
@@ -927,6 +942,7 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* ---------- shell ---------- */
   function renderApp() {
+    $$('.subnav-item').forEach((el) => el.classList.toggle('on', el.dataset.nav === (S.view === 'create' ? 'create' : 'list')));
     $('#wsHead').innerHTML = '<div class="ws-head">' + renderHead() + '</div>';
     $('#stages').hidden = S.view !== 'detail';
     $$('.panel').forEach((el) => { el.classList.remove('active'); });
@@ -976,6 +992,7 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
       updateRunLive();
       if (S.pct >= 1) finishRun();
     }, 220);
+    S.batchName = ''; S.desc = '';
     toast('跑批已发起：' + b.name);
   }
 
@@ -1017,6 +1034,8 @@ table.list td.mono { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
   /* ---------- events ---------- */
   function bind() {
     document.addEventListener('click', function (e) {
+      const nav = e.target.closest('[data-nav]');
+      if (nav) { if (nav.dataset.nav === 'create') { S.batchName = ''; S.desc = ''; S.view = 'create'; } else { S.view = 'list'; } renderApp(); return; }
       if (e.target.closest('[data-new]')) { S.batchName = ''; S.desc = ''; S.view = 'create'; renderApp(); return; }
       if (e.target.closest('[data-back]')) { S.view = 'list'; renderApp(); return; }
       const row = e.target.closest('[data-open]');

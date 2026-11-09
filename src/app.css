@@ -20,6 +20,12 @@ body {
 .brand { padding:28.5px 0 0 35.5px; }
 .brand img { display:block; width:180.5px; height:auto; }
 .nav { margin-top:26.5px; }
+.subnav { display:flex; flex-direction:column; margin-top:2px; }
+.subnav-item { position:relative; height:36px; display:flex; align-items:center; padding:0 22px 0 62px; border:0; background:none; font:inherit; font-size:13px; color:var(--muted); cursor:pointer; text-align:left; }
+.subnav-item:hover { color:var(--ink); background:rgba(80,149,255,.04); }
+.subnav-item.on { color:var(--blue-deep); font-weight:500; background:#F3F8FF; }
+.subnav-item.on:before { content:''; position:absolute; left:0; top:8px; bottom:8px; width:2px; background:var(--blue); border-radius:1px; }
+
 .nav-item { height:54px; display:flex; align-items:center; padding:0 22.6px 0 27.5px; cursor:pointer; color:var(--ink); font-size:14px; line-height:1; transition:background .2s; user-select:none; }
 .nav-item:hover { background:rgba(80,149,255,.05); }
 .nav-item .ico { width:20.5px; height:20.5px; flex:0 0 20.5px; margin-right:12px; }
