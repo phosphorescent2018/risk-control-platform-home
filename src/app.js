@@ -94,11 +94,10 @@
   function snap() {
     const s = cur();
     const groups = s.groups.filter((g) => S.groups.includes(g.id));
-    if (!groups.length) groups.push(s.groups[0]);
     const crowd = groups.reduce((a, g) => a + g.crowd, 0);
     return {
-      strategy: S.strategy, versionType: S.versionType, groups: S.groups.slice(),
-      crowd, runMin: Math.max(1, Math.round(crowd / (s.speed * 10000) * 60)),
+      strategy: S.strategy, versionType: S.versionType, groups: groups.map((g) => g.id),
+      crowd, runMin: crowd ? Math.max(1, Math.round(crowd / (s.speed * 10000) * 60)) : 0,
       shards: Math.ceil(crowd / 4000)
     };
   }
@@ -214,9 +213,14 @@
     const vtOpts = '<option value="FORMAL"' + (S.versionType === 'FORMAL' ? ' selected' : '') + '>Official</option>' +
       (s.beta ? '<option value="BETA"' + (S.versionType === 'BETA' ? ' selected' : '') + '>Test</option>' : '');
     const selRows = s.groups.filter((g) => S.groups.includes(g.id)).map((g) =>
-      '<div class="gitem sel"><span class="nm">' + g.name + '</span><span class="gnum">' + fmt(g.crowd) + '</span><i class="gx" data-remove-group="' + g.id + '">×</i></div>'
-    ).join('') || '<div class="gp-empty">暂无选择，从左侧选择分组</div>';
-    const person = '<svg class="gicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20c.7-3.6 3.2-5.6 6.5-5.6s5.8 2 6.5 5.6"/></svg>';
+      '<div class="gcard"><i class="gx" data-remove-group="' + g.id + '">×</i>' +
+      '<div class="gc-row"><span class="k">分组名称</span><span class="v">' + g.name + '</span></div>' +
+      '<div class="gc-row"><span class="k">客户数</span><span class="v">' + fmt(g.crowd) + '</span></div>' +
+      '<div class="gc-row"><span class="k">更新时间</span><span class="v">' + g.updated + '</span></div>' +
+      '<div class="gc-row"><span class="k">筛选条件</span><span class="v mono" title="' + g.desc + '">' + g.desc + '</span></div>' +
+      '</div>'
+    ).join('') || '<div class="gp-empty">从左侧选择客户分组</div>';
+    const person = '<svg class="gicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.6-3.2 2.8-4.9 5.5-4.9s4.9 1.7 5.5 4.9"/><path d="M15.8 6.2a2.8 2.8 0 010 5.4"/><path d="M17.6 19c-.2-1.6-.7-2.9-1.4-3.8 2.2.2 3.8 1.7 4.3 3.8"/></svg>';
     const q = (S.gsearch || '').trim().toLowerCase();
     const listRows = s.groups.filter((g) => !q || g.name.toLowerCase().includes(q)).map((g) => {
       const on = S.groups.includes(g.id);
@@ -238,12 +242,12 @@
       '<div class="field" style="margin-top:12px"><label>描述</label><textarea class="textarea" id="batchDesc" rows="1" placeholder="可选">' + (S.desc || '') + '</textarea></div>' +
       '<div class="field" style="margin-top:12px"><label>客户分组<i class="req">*</i></label>' +
         '<div class="gp-wrap">' +
-          '<div class="gp-left"><input class="input" id="gSearch" placeholder="搜索分组名称" value="' + (S.gsearch || '').replace(/"/g, '&quot;') + '"><div class="glist">' + listRows + '</div></div>' +
-          '<div class="gp-right"><div class="gp-title">已选分组（' + cfg.groups.length + '）</div><div class="glist">' + selRows + '</div>' +
-            '<div class="gp-total">已选 ' + cfg.groups.length + ' 个分组 · 合计 ' + wan(cfg.crowd) + '</div></div>' +
+          '<div class="gp-left"><div class="gp-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.2"/><path d="M16 16l4.5 4.5" stroke-linecap="round"/></svg><input id="gSearch" placeholder="搜索分组名称" value="' + (S.gsearch || '').replace(/"/g, '&quot;') + '"></div><div class="glist">' + listRows + '</div></div>' +
+          '<div class="gp-right"><div class="gp-res-title">已选分组（' + cfg.groups.length + '）</div><div class="glist">' + selRows + '</div></div>' +
         '</div>' +
+        '<div class="gp-foot"><span>合计 <b>' + fmt(cfg.crowd) + '</b> 位客户</span><button class="gp-reset" data-greset>重置</button></div>' +
       '</div>' +
-      '<div class="form-foot"><button class="btn primary" data-launch>发起跑批</button></div>' +
+      '<div class="form-foot">' + (cfg.groups.length ? '' : '<span class="foot-hint">请选择至少一个客户分组</span>') + '<button class="btn primary" data-launch' + (cfg.groups.length ? '' : ' disabled') + '>发起跑批</button></div>' +
     '</section>';
   }
 
@@ -567,6 +571,7 @@
   }
 
   function startRun() {
+    if (!S.groups.length) { toast('请选择至少一个客户分组'); return; }
     if (S.running) return;
     if (!S.batchName.trim()) { toast('请填写批次名称'); const el = $('#batchName'); if (el) el.focus(); return; }
     const cfg = snap();
@@ -633,6 +638,7 @@
       if (tab) { S.tab = tab.dataset.tab; renderApp(); return; }
       const launch = e.target.closest('[data-launch]'); if (launch && !launch.disabled) { startRun(); return; }
       const stop = e.target.closest('[data-stop]'); if (stop) { stopRun(); return; }
+      if (e.target.closest('[data-greset]')) { S.groups = []; renderApp(); return; }
       const mcat = e.target.closest('[data-mcat]');
       if (mcat) { S.mcat = mcat.dataset.mcat; renderApp(); return; }
       const mcell = e.target.closest('[data-mcell]');
