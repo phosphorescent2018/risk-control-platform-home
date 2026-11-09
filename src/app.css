@@ -731,3 +731,9 @@ button.gitem { cursor:pointer; text-align:left; }
 .pgbtn:hover:not(:disabled) { border-color:#C7D7F2; color:var(--blue-deep); }
 .pgbtn.on { background:var(--blue); border-color:var(--blue); color:#fff; }
 .pgbtn:disabled { color:#C3CBD8; cursor:not-allowed; background:#FAFBFD; }
+
+.ops { text-align:right; white-space:nowrap; }
+.icbtn { width:26px; height:26px; border:1px solid transparent; background:none; border-radius:6px; color:#7C8BA3; cursor:pointer; padding:3px; vertical-align:middle; }
+.icbtn svg { width:16px; height:16px; display:block; margin:auto; }
+.icbtn:hover:not(:disabled) { background:#F2F6FD; border-color:#DCE6F7; color:var(--blue-deep); }
+.icbtn:disabled { color:#D2D8E3; cursor:not-allowed; }
