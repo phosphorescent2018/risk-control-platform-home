@@ -265,7 +265,7 @@
         '<div class="rpt-rows">' + REPORT_DEFS.map((d) => {
           const on = S.reports.indexOf(d.code) >= 0;
           return '<div class="rpt-line' + (on ? ' on' : '') + '">' +
-            '<button class="rpt-check" data-rpt="' + d.code + '"><span class="cbx"></span><span class="nm">' + d.name + '</span></button>' +
+            '<button class="rpt-check' + (on ? ' on' : '') + '" data-rpt="' + d.code + '"><span class="cbx"></span><span class="nm">' + d.name + '</span></button>' +
             (on ? '<span class="cmp"><span class="cmp-l">对比批次<i class="req">*</i></span><input class="input cmp-in" data-cmp="' + d.code + '" placeholder="例如 459_20261028091106" value="' + (S.rptCompare[d.code] || '').replace(/"/g, '&quot;') + '"></span>' : '') +
           '</div>';
         }).join('') + '</div>' +
