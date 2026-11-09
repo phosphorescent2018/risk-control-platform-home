@@ -628,3 +628,11 @@ button.gitem { cursor:pointer; text-align:left; }
 .form-sec-head b { font-size:12.5px; font-weight:600; color:var(--ink); }
 .fs-sub { font-size:10px; color:var(--muted); }
 .grid2 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 18px; }
+
+.big-split.four { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.big-split .net b.up { color:#C0392B; }
+.big-split .net b.down { color:#2F8F66; }
+.mtx td.mcell { padding:5px 8px; }
+.mtx-in { width:74px; height:26px; border:1px solid var(--line); border-radius:5px; text-align:right; font:inherit; font-size:11px; padding:0 6px; color:var(--ink); }
+.mtx-in:focus { outline:none; border-color:#BCD2F7; box-shadow:0 0 0 3px rgba(80,149,255,.12); }
+.mtx .mx { margin-left:5px; font-size:9px; color:#B3BCCB; font-variant-numeric:tabular-nums; }

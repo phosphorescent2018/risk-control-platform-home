@@ -636,6 +636,14 @@ button.gitem { cursor:pointer; text-align:left; }
 .fs-sub { font-size:10px; color:var(--muted); }
 .grid2 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 18px; }
 
+.big-split.four { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.big-split .net b.up { color:#C0392B; }
+.big-split .net b.down { color:#2F8F66; }
+.mtx td.mcell { padding:5px 8px; }
+.mtx-in { width:74px; height:26px; border:1px solid var(--line); border-radius:5px; text-align:right; font:inherit; font-size:11px; padding:0 6px; color:var(--ink); }
+.mtx-in:focus { outline:none; border-color:#BCD2F7; box-shadow:0 0 0 3px rgba(80,149,255,.12); }
+.mtx .mx { margin-left:5px; font-size:9px; color:#B3BCCB; font-variant-numeric:tabular-nums; }
+
 </style>
 </head>
 <body>
@@ -1275,44 +1283,55 @@ button.gitem { cursor:pointer; text-align:left; }
       ['降额', '0 – 5 万', Math.round(dec * 0.71)], ['降额', '5 万以上', Math.round(dec * 0.29)]
     ].map((r) => '<tr><td><span class="tag ' + (r[0] === '提额' ? 'bad' : 'ok') + '">' + r[0] + '</span></td><td>' + r[1] + '</td><td class="r">' + fmt(r[2]) + '</td><td class="r">' + (r[2] / cfg.crowd * 100).toFixed(2) + '%</td></tr>').join('');
 
-    const MTX = {
-      tiers: ['T1 高价值', 'T2 中价值', 'T3 普通', '无层级'],
-      ods: ['可提额OD', '无OD机会'],
-      inc: [0.42, 0.05, 0.28, 0.07, 0.12, 0.02, 0.03, 0.01],
-      dec: [0.10, 0.15, 0.12, 0.20, 0.15, 0.22, 0.02, 0.04],
-      keep: [0.10, 0.16, 0.08, 0.13, 0.06, 0.19, 0.01, 0.27]
-    };
+    const VALS = [{ n: 'EH 极高', s: 0.10 }, { n: 'H 高', s: 0.26 }, { n: 'M 中', s: 0.26 }, { n: 'L 低', s: 0.28 }, { n: 'EL 极低', s: 0.10 }];
+    const TIERS = [{ n: 'T1 >5Y', s: 0.217 }, { n: 'T2 2–5Y', s: 0.255 }, { n: '其他账龄', s: 0.528 }];
+    const CAT = { inc: inc, dec: dec, keep: keep };
     if (!S.mcat) S.mcat = 'inc';
-    if (!b.pushSel) b.pushSel = { inc: [true, true, true, true, true, true, true, true], dec: [true, true, true, true, true, true, true, true] };
+    const capsAll = function (c) {
+      const rows = VALS.map(function (v, i) {
+        const total = Math.round(CAT[c] * v.s);
+        const arr = TIERS.map(function (t) { return Math.round(total * t.s); });
+        arr[2] += total - arr.reduce(function (a, n) { return a + n; }, 0);
+        return arr;
+      });
+      const all = rows.reduce(function (a, r) { return a + r.reduce(function (x, y) { return x + y; }, 0); }, 0);
+      rows[4][2] += CAT[c] - all;
+      return rows;
+    };
+    const capsOf = function (c, i) { return capsAll(c)[i]; };
+    if (!b.alloc) b.alloc = {};
+    ['inc', 'dec', 'keep'].forEach(function (c) {
+      if (!b.alloc[c] || b.alloc[c].length !== 5) {
+        b.alloc[c] = capsAll(c);
+      }
+    });
     const cat = S.mcat;
-    const catTotal = cat === 'inc' ? inc : cat === 'dec' ? dec : keep;
-    const counts = MTX[cat].map((f) => Math.round(catTotal * f));
-    const editable = cat !== 'keep';
-    const mrows = MTX.tiers.map((t, ti) => {
-      const cells = [0, 1].map((ci) => {
-        const i = ti * 2 + ci;
-        const n = counts[i];
-        const on = editable ? b.pushSel[cat][i] : true;
-        return '<td class="' + (editable ? 'pick ' : '') + (on ? '' : 'off') + '" ' + (editable ? 'data-mcell="' + i + '"' : '') + '>' + (editable ? '<span class="mk">' + (on ? '✓' : '') + '</span>' : '') + '<b>' + fmt(n) + '</b></td>';
+    const avail = function (i, j) { return capsOf(cat, i)[j]; };
+    const curOf = function (c, i, j) { return Math.min(b.alloc[c][i][j], capsOf(c, i)[j]); };
+    const mrows = VALS.map(function (v, i) {
+      const cells = TIERS.map(function (t, j) {
+        const a = avail(i, j), cur = curOf(cat, i, j);
+        return '<td class="mcell"><input class="mtx-in" type="number" min="0" max="' + a + '" value="' + cur + '" data-mcell="' + i + '-' + j + '"><span class="mx">/ ' + fmt(a) + '</span></td>';
       }).join('');
-      return '<tr><td class="tl">' + t + '</td>' + cells + '<td class="r sum">' + fmt(counts[ti * 2] + counts[ti * 2 + 1]) + '</td></tr>';
+      const rowSum = TIERS.reduce(function (acc, t, j) { return acc + curOf(cat, i, j); }, 0);
+      return '<tr><td class="tl">' + v.n + '</td>' + cells + '<td class="r sum">' + fmt(rowSum) + '</td></tr>';
     }).join('');
-    const colSums = [0, 1].map((ci) => counts[ci] + counts[2 + ci] + counts[4 + ci] + counts[6 + ci]);
-    const incCounts = MTX.inc.map((f) => Math.round(inc * f));
-    const decCounts = MTX.dec.map((f) => Math.round(dec * f));
-    const selInc = incCounts.reduce((a, n, i) => a + (b.pushSel.inc[i] ? n : 0), 0);
-    const selDec = decCounts.reduce((a, n, i) => a + (b.pushSel.dec[i] ? n : 0), 0);
+    const colSums = TIERS.map(function (t, j) { return VALS.reduce(function (acc, v, i) { return acc + curOf(cat, i, j); }, 0); });
+    const sumAll = function (c) { return VALS.reduce(function (acc, v, i) { return acc + TIERS.reduce(function (a2, t, j) { return a2 + curOf(c, i, j); }, 0); }, 0); };
+    const selInc = sumAll('inc'), selDec = sumAll('dec'), selKeep = sumAll('keep');
     const incAmt = selInc * 4500, decAmt = selDec * 2800, netAmt = incAmt - decAmt;
-    const yi = (v) => (v / 1e8).toFixed(2) + ' 亿';
-    const matrix = '<div class="box matrix"><div class="box-head"><div><h3>结果加工 · 推送范围</h3><p class="sub">按 history_tier × opportunity_od 选择本次推送人群</p></div>' +
-      '<div class="seg small"><button data-mcat="inc" class="' + (cat === 'inc' ? 'on' : '') + '">提额人群</button><button data-mcat="dec" class="' + (cat === 'dec' ? 'on' : '') + '">降额人群</button><button data-mcat="keep" class="' + (cat === 'keep' ? 'on' : '') + '">额度不变人群</button></div></div>' +
-      '<table class="mtx"><thead><tr><th>客户层级</th><th>' + MTX.ods[0] + '</th><th>' + MTX.ods[1] + '</th><th class="r">小计</th></tr></thead><tbody>' + mrows +
-      '<tr class="mtx-sum"><td class="tl">合计</td><td><b>' + fmt(colSums[0]) + '</b></td><td><b>' + fmt(colSums[1]) + '</b></td><td class="r"><b>' + fmt(catTotal) + '</b></td></tr></tbody></table>' +
-      '<div class="mtx-foot"><span>' + (editable ? '已选 <b>' + fmt(selInc) + '</b> 提额 · <b>' + fmt(selDec) + '</b> 降额' : '额度不变人群不参与本次推送') + '</span>' +
-      '<span class="mtx-total">本次预计调整最终额度汇总 <b>' + (netAmt >= 0 ? '+' : '−') + yi(Math.abs(netAmt)) + '</b><i>提额 +' + yi(incAmt) + ' · 降额 −' + yi(decAmt) + '</i></span></div></div>';
+    const yi = function (v) { return (v / 1e8).toFixed(2) + ' 亿'; };
+    const catSel = cat === 'inc' ? selInc : cat === 'dec' ? selDec : selKeep;
+    const matrix = '<div class="box matrix"><div class="box-head"><div><h3>结果加工 · 额度矩阵</h3><p class="sub">客户价值 × history_tier，可下调各格纳入人数</p></div>' +
+      '<div class="seg small"><button data-mcat="inc" class="' + (cat === 'inc' ? 'on' : '') + '">提额矩阵</button><button data-mcat="dec" class="' + (cat === 'dec' ? 'on' : '') + '">降额矩阵</button><button data-mcat="keep" class="' + (cat === 'keep' ? 'on' : '') + '">维持矩阵</button></div></div>' +
+      '<table class="mtx"><thead><tr><th>客户价值</th><th>T1 &gt;5Y</th><th>T2 2–5Y</th><th>其他账龄</th><th class="r">小计</th></tr></thead><tbody>' + mrows +
+      '<tr class="mtx-sum"><td class="tl">合计</td><td>' + fmt(colSums[0]) + '</td><td>' + fmt(colSums[1]) + '</td><td>' + fmt(colSums[2]) + '</td><td class="r">' + fmt(catSel) + '</td></tr></tbody></table>' +
+      '<div class="mtx-foot"><span>本次纳入 <b>' + fmt(catSel) + '</b> / 原 <b>' + fmt(CAT[cat]) + '</b> 人 · 提额 <b>' + fmt(selInc) + '</b> · 降额 <b>' + fmt(selDec) + '</b> · 维持 <b>' + fmt(selKeep) + '</b></span>' +
+      '<span class="mtx-total">本次预计调额额度 <b>' + (netAmt >= 0 ? '+' : '−') + yi(Math.abs(netAmt)) + '</b><i>提额 +' + yi(incAmt) + ' · 降额 −' + yi(decAmt) + '</i></span></div></div>';
 
+    const netAll = inc * 4500 - dec * 2800;
     $('#panelDetail').innerHTML = matrix + '<div class="push-grid" style="margin-top:14px"><div class="box"><div class="box-head"><div><h3>调额汇总</h3><p class="sub">' + b.id + ' · ' + s.label + ' ' + versionOf(cfg) + ' · ' + hhmm(totalMin(cfg)) + '</p></div></div>' +
-      '<div class="big-split"><div class="up"><i>提额</i><b>' + wan(inc) + '</b></div><div class="down"><i>降额</i><b>' + wan(dec) + '</b></div><div><i>维持</i><b>' + wan(keep) + '</b></div></div>' +
+      '<div class="big-split four"><div class="up"><i>提额</i><b>' + wan(inc) + '</b></div><div class="down"><i>降额</i><b>' + wan(dec) + '</b></div><div><i>维持</i><b>' + wan(keep) + '</b></div><div class="net"><i>净额度变化</i><b class="' + (netAll >= 0 ? 'up' : 'down') + '">' + (netAll >= 0 ? '+' : '−') + yi(Math.abs(netAll)) + '</b></div></div>' +
       '<table class="list" style="margin-top:8px"><thead><tr><th>方向</th><th>区间</th><th class="r">人数</th><th class="r">占比</th></tr></thead><tbody>' + buckets + '</tbody></table></div>' +
       '<div class="box"><div class="box-head"><div><h3>推送至 LMS</h3><p class="sub">DE 批次 → LMS 批次 → 批量改额</p></div></div><div class="steps">' + steps + '</div>' +
       (b.pushStep === 4 ? '<span class="demo-link" data-complete>演示：模拟 LMS 完成改额</span>' : '') +
@@ -1443,6 +1462,17 @@ button.gitem { cursor:pointer; text-align:left; }
 
   /* ---------- events ---------- */
   function bind() {
+    document.addEventListener('change', function (e) {
+      if (!e.target.classList || !e.target.classList.contains('mtx-in')) return;
+      const b = currentBatch(); if (!b || !b.alloc) return;
+      const parts = e.target.dataset.mcell.split('-');
+      const i = +parts[0], j = +parts[1];
+      const max = +e.target.max || 0;
+      let v = Math.round(+e.target.value || 0);
+      v = Math.max(0, Math.min(max, v));
+      b.alloc[S.mcat][i][j] = v;
+      renderApp();
+    });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { if (S.confirmOpen) { S.confirmOpen = false; renderApp(); } else if (S.groupOpen) { S.groupOpen = false; renderApp(); } } });
     document.addEventListener('click', function (e) {
       const nav = e.target.closest('[data-nav]');
