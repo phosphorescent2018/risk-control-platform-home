@@ -67,7 +67,7 @@
   const S = {
     view: 'list', tab: 'run', batchId: null,
     strategy: 'credit_offline', business: 'MTN_Uganda', version: 'v20', versionType: 'FORMAL', batchName: '', desc: '',
-    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, confirmOpen: false, groupOpen: false, groupUp: false, pushArm: false, mcat: 'inc',
+    groups: ['wallet_active'], gsearch: '', selDay: '2026-10-23', calOpen: true, reportView: 'list', confirmOpen: false, groupOpen: false, groupUp: false, pushArm: false, mcat: 'inc',
     pickerDraft: [], pickerSearch: '', running: false, pct: 0, timer: null, lastShard: -1
   };
 
@@ -431,6 +431,43 @@
   function renderReport() {
     const b = currentBatch();
     if (!b || b.status !== 'completed') {
+      $('#panelDetail').innerHTML = '<div class="box idle"><div class="big">报告尚未生成</div><div class="sub">跑批完成后自动生成报告</div></div>';
+      return;
+    }
+    if (S.reportView === 'event') {
+      renderEventReport();
+      const el = $('#panelDetail');
+      el.innerHTML = '<div class="rpt-back"><button class="back" data-report-back><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg>报告</button></div>' + el.innerHTML;
+      return;
+    }
+    const cfg = b.config, s = STRATEGIES[cfg.strategy];
+    const isPre = cfg.strategy === 'credit_offline';
+    const defs = [
+      { code: 'BATCH_EVENT_REPORT', name: '跑批事件报告', desc: '切片搬运 → 等待 → 执行全链路事件、速度与资源异常', blocks: 6, ok: true, event: true },
+      { code: 'PRE_LOAN_OPERATION_REPORT', name: '贷前运营跑批报告', desc: '钱包漏斗 · 授信额度区间 · 规则占比 · 模型 PSI', blocks: 9, ok: isPre },
+      { code: 'IN_LOAN_LIMIT_MIGRATION_REPORT', name: '贷中额度迁移报告', desc: '二维额度迁移矩阵 · 调整前后分布 · 降为 0 原因', blocks: 7, ok: !isPre },
+      { code: 'IN_LOAN_MODEL_STABILITY_REPORT', name: '模型稳定性与入模变量报告', desc: 'A/B/F 模型稳定性 · PSI 监控 · Top10 变量 CSI', blocks: 5, ok: true },
+      { code: 'IN_LOAN_FULL_POPULATION_LIMIT_REPORT', name: '全量客群期次额度报告', desc: '新旧 Profiling 额度分布矩阵 · 本次/上次迁移矩阵', blocks: 4, ok: !isPre },
+      { code: 'IN_LOAN_FULL_POPULATION_FINAL_LIMIT_REPORT', name: '全量客群期次额度报告（Final Limit）', desc: 'Final Limit 版本 · 额度分布矩阵 · 迁移矩阵', blocks: 4, ok: !isPre }
+    ];
+    const rows = defs.map((d) => '<div class="rpt-row' + (d.ok ? '' : ' off') + '">' +
+      '<div class="rpt-ico"><span></span></div>' +
+      '<div class="rpt-main"><b>' + d.name + '</b><span>' + d.desc + '</span><code>' + d.code + '</code></div>' +
+      '<span class="rpt-blocks">' + d.blocks + ' 区块</span>' +
+      '<span class="tag ' + (d.ok ? 'ok' : 'na') + '">' + (d.ok ? '已生成' : '不适用') + '</span>' +
+      '<span class="rpt-time">' + (d.ok ? b.ended.slice(0, 16) : '—') + '</span>' +
+      '<div class="rpt-act">' + (d.ok ? '<button class="btn sm ghost" data-report-' + (d.event ? 'open' : 'soon') + '="' + d.code + '">查看</button><button class="btn sm ghost" data-report-export="' + d.code + '">导出</button>' : '<span class="rpt-na">—</span>') + '</div>' +
+      '</div>').join('');
+    const okCount = defs.filter((d) => d.ok).length;
+    $('#panelDetail').innerHTML = '<div class="box rpt"><div class="box-head"><div><h3>报告</h3><p class="sub">' + b.id + ' · ' + s.label + ' ' + versionOf(cfg) + ' · 切片日 ' + (cfg.sliceDate || s.sliceDate) + ' · 共 ' + defs.length + ' 份，已生成 ' + okCount + ' 份</p></div>' +
+      '<button class="btn sm ghost" data-report-all>导出全部</button></div>' +
+      '<div class="rpt-list">' + rows + '</div>' +
+      '<div class="rpt-note">报告模板与区块来自 DE 生产配置（生产跑批四报表 + Final Limit），事件报告为本批次运行态报告。</div></div>';
+  }
+
+  function renderEventReport() {
+    const b = currentBatch();
+    if (!b || b.status !== 'completed') {
       $('#panelDetail').innerHTML = '<div class="box idle"><div class="big">报告尚未生成</div><div class="sub">跑批完成后自动生成事件报告</div></div>';
       return;
     }
@@ -686,6 +723,7 @@
       const row = e.target.closest('[data-open]');
       if (row) { openBatch(row.dataset.open); return; }
       const tab = e.target.closest('[data-tab]');
+      if (tab && tab.dataset.tab === 'report') S.reportView = 'list';
       if (tab) { S.tab = tab.dataset.tab; renderApp(); return; }
       const launch = e.target.closest('[data-launch]');
       if (launch && !launch.disabled) {
@@ -711,6 +749,11 @@
       if (e.target.closest('[data-gdone]')) { S.groupOpen = false; renderApp(); return; }
       if (e.target.closest('[data-gclear]')) { S.groups = []; renderApp(); return; }
       if (S.groupOpen && !e.target.closest('.gsel')) { S.groupOpen = false; renderApp(); return; }
+      if (e.target.closest('[data-report-open]')) { S.reportView = 'event'; renderApp(); return; }
+      if (e.target.closest('[data-report-back]')) { S.reportView = 'list'; renderApp(); return; }
+      if (e.target.closest('[data-report-soon]')) { toast('该报告模板待接入（' + e.target.closest('[data-report-soon]').dataset.reportSoon + '）'); return; }
+      if (e.target.closest('[data-report-export]')) { toast('导出任务已创建（演示）'); return; }
+      if (e.target.closest('[data-report-all]')) { toast('已提交全部报告导出（演示）'); return; }
       const mcat = e.target.closest('[data-mcat]');
       if (mcat) { S.mcat = mcat.dataset.mcat; renderApp(); return; }
       const mcell = e.target.closest('[data-mcell]');

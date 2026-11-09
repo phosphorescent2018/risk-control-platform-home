@@ -563,3 +563,23 @@ button.gitem { cursor:pointer; text-align:left; }
 .back:hover { border-color:#C7D7F2; color:var(--blue-deep); background:#F8FBFF; }
 .back svg { width:13px; height:13px; color:#8A96AB; }
 .back:hover svg { color:var(--blue-deep); }
+
+.rpt-back { margin-bottom:10px; }
+.rpt-list { display:flex; flex-direction:column; gap:8px; margin-top:12px; }
+.rpt-row { display:grid; grid-template-columns:32px minmax(0,1fr) 60px 64px 118px 116px; gap:14px; align-items:center; border:1px solid var(--line); border-radius:10px; padding:10px 12px; background:#fff; }
+.rpt-row.off { background:#FAFBFD; }
+.rpt-row.off .rpt-main b { color:#8B96A9; }
+.rpt-ico { width:30px; height:30px; border-radius:8px; background:#EFF5FF; display:flex; align-items:center; justify-content:center; }
+.rpt-ico span { width:11px; height:14px; border:1.6px solid #5095FF; border-radius:2px; position:relative; display:block; }
+.rpt-ico span:after { content:''; position:absolute; left:2px; top:3px; width:5px; height:1.5px; background:#5095FF; box-shadow:0 3px 0 #5095FF; }
+.rpt-row.off .rpt-ico { background:#F3F5F9; }
+.rpt-row.off .rpt-ico span { border-color:#B9C3D4; }
+.rpt-row.off .rpt-ico span:after { background:#B9C3D4; box-shadow:0 3px 0 #B9C3D4; }
+.rpt-main b { display:block; font-size:12px; font-weight:500; color:var(--ink); }
+.rpt-main span { display:block; font-size:10px; color:var(--muted); margin-top:2px; }
+.rpt-main code { display:block; font-size:8.5px; color:#B3BBC8; margin-top:3px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+.rpt-blocks { font-size:10px; color:var(--muted); text-align:right; font-variant-numeric:tabular-nums; }
+.rpt-time { font-size:10px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.rpt-act { display:flex; gap:6px; justify-content:flex-end; }
+.rpt-na { font-size:10px; color:#C3CAD6; }
+.rpt-note { margin-top:10px; font-size:9.5px; color:#A9B1BF; }
