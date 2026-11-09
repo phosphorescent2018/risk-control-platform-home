@@ -233,6 +233,9 @@
     const selChips = s.groups.filter((g) => S.groups.includes(g.id)).map((g) =>
       '<span class="gchip" title="' + g.updated + ' · ' + g.desc + '"><b>' + g.name + '</b><span class="n">' + fmt(g.crowd) + '</span><i class="x" data-gremove="' + g.id + '">×</i></span>'
     ).join('');
+    const selDetails = s.groups.filter((g) => S.groups.includes(g.id)).map((g) =>
+      '<div class="gmeta"><span class="nm">' + g.name + '</span><span class="num">' + fmt(g.crowd) + '</span><span class="time">' + g.updated + '</span><span class="desc">' + g.desc + '</span></div>'
+    ).join('');
     const q = (S.gsearch || '').trim().toLowerCase();
     const listRows = s.groups.filter((g) => !q || g.name.toLowerCase().includes(q)).map((g) => {
       const on = S.groups.includes(g.id);
@@ -263,7 +266,8 @@
             '<div class="gpop-foot"><span>已选 ' + cfg.groups.length + ' 个 · 合计 ' + fmt(cfg.crowd) + ' 人</span><span class="sp"></span><button data-gclear>清空</button><button data-gdone>完成</button></div>' +
           '</div>' : '') +
         '</div>' +
-        '<div class="gsel-hint">已选 <b>' + cfg.groups.length + '</b> 个分组 · 合计 <b>' + fmt(cfg.crowd) + '</b> 位客户</div>' +
+        '<div class="gsel-sum">已选 <b>' + cfg.groups.length + '</b> 个分组 · 合计 <b>' + fmt(cfg.crowd) + '</b> 位客户</div>' +
+        (cfg.groups.length ? '<div class="gmeta-list"><div class="gmeta-head"><span>分组名称</span><span>客户数</span><span>更新时间</span><span>筛选条件</span></div>' + selDetails + '</div>' : '') +
       '</div>' +
       '<div class="form-foot split"><div class="run-sum"><span>预计 <b>' + wan(cfg.crowd) + '</b> 人</span><i>·</i><span><b>' + fmt(cfg.shards) + '</b> 分片</span><i>·</i><span>约 <b>' + hhmm(cfg.runMin) + '</b></span></div>' +
         (cfg.groups.length ? '' : '<span class="foot-hint">请选择至少一个客户分组</span>') +

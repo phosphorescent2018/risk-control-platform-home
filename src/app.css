@@ -510,3 +510,16 @@ button.gitem { cursor:pointer; text-align:left; }
 .cal-col.pending { background:#FAFBFD; border-color:#F1F3F8; }
 .cal-col.pending .cal-d { color:#B7BFCB; }
 .cal-bars i.na { background:#E9EDF3; }
+
+.gsel-sum { margin-top:7px; font-size:10px; color:var(--muted); }
+.gsel-sum b { color:var(--ink); font-variant-numeric:tabular-nums; }
+.gmeta-list { margin-top:6px; border:1px solid #F0F2F7; border-radius:8px; overflow:hidden; }
+.gmeta-head, .gmeta { display:grid; grid-template-columns:minmax(0,1.05fr) 100px 132px minmax(0,1.55fr); gap:12px; padding:6px 10px; font-size:10px; align-items:center; }
+.gmeta-head { background:#FAFBFE; color:#9AA1B6; font-size:9.5px; border-bottom:1px solid #F0F2F7; }
+.gmeta-head span:nth-child(2) { text-align:right; }
+.gmeta { border-bottom:1px solid #F6F7FA; }
+.gmeta:last-child { border-bottom:none; }
+.gmeta .nm { color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.gmeta .num { color:var(--ink); text-align:right; font-variant-numeric:tabular-nums; }
+.gmeta .time { color:var(--muted); font-variant-numeric:tabular-nums; }
+.gmeta .desc { color:var(--muted); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:9.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
