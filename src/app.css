@@ -534,3 +534,13 @@ button.gitem { cursor:pointer; text-align:left; }
 .gblock .gmeta { padding:6px 10px; }
 .gopt { padding:6px 8px; line-height:1.25; }
 .gpop-list { gap:1px; }
+
+.gpop { width:420px; max-width:100%; right:auto; }
+.gpop .gp-search input { height:32px; font-size:11px; padding-left:31px; }
+.gpop .gp-search svg { width:12px; height:12px; }
+.gpop-list { margin-top:8px; max-height:220px; }
+.gopt { padding:7px 9px; gap:10px; border-radius:6px; }
+.gopt .box { width:14px; height:14px; border-radius:4px; flex:0 0 14px; }
+.gopt.on .box:after { left:4px; top:2px; }
+.gopt .num { font-size:10.5px; }
+.gpop-foot { font-size:10px; margin-top:8px; padding-top:7px; }
